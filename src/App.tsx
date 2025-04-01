@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import React from "react";
+import React, { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
@@ -17,6 +17,11 @@ import Dashboard from "./pages/Dashboard";
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Set document title
+  useEffect(() => {
+    document.title = "SnapSummary - AI-powered Text Summarization";
+  }, []);
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>

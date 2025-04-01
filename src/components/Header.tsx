@@ -34,7 +34,7 @@ const Header: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            Smart Summary
+            SnapSummary
           </motion.h2>
         </div>
         
@@ -95,7 +95,7 @@ const Header: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
       >
-        Smart Summary
+        SnapSummary
       </motion.h1>
       
       <motion.p 

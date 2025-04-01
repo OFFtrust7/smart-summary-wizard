@@ -35,10 +35,14 @@ const SignIn: React.FC = () => {
     // Here you would typically connect to your auth service
     console.log("Sign in attempt:", data);
     
+    // Extract username from email for display purposes
+    const username = data.email.split('@')[0];
+    localStorage.setItem('username', username);
+    
     // Simulate successful login
     toast({
       title: "Sign in successful!",
-      description: "Welcome back to Smart Summary",
+      description: "Welcome back to SnapSummary",
     });
     
     // Redirect to dashboard after sign in
@@ -69,7 +73,7 @@ const SignIn: React.FC = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              Sign in to your Smart Summary account
+              Sign in to your SnapSummary account
             </motion.p>
           </div>
 
