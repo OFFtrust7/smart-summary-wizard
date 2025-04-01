@@ -12,6 +12,7 @@ import SignUp from "./pages/SignUp";
 import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
 import Dashboard from "./pages/Dashboard";
+import { UsageLimitsProvider } from "./contexts/UsageLimitsContext";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -26,22 +27,24 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/payment" element={<Payment />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/payment-success" element={<Dashboard />} />
-              <Route path="/payment-canceled" element={<Pricing />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <UsageLimitsProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/payment" element={<Payment />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/payment-success" element={<Dashboard />} />
+                <Route path="/payment-canceled" element={<Pricing />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </UsageLimitsProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </React.StrictMode>

@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { summarizeText } from '@/services/summaryService';
+import { useUsageLimits } from '@/contexts/UsageLimitsContext';
+import { AlertCircle } from 'lucide-react';
 
 interface SummarizerFormProps {
   onSummarize: (summary: string) => void;
@@ -23,6 +25,7 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
 }) => {
   const [text, setText] = useState('');
   const [summaryLength, setSummaryLength] = useState('balanced');
+  const { incrementUsage, remainingUsage, isLimitReached } = useUsageLimits();
 
   const getDefaultPlaceholder = () => {
     switch(inputType) {
@@ -40,6 +43,12 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
     
     if (!text.trim()) {
       toast.error(`Please enter ${inputType === 'text' ? 'some text' : 'a valid URL'} to summarize`);
+      return;
+    }
+
+    // Check usage limits before proceeding
+    if (!incrementUsage(inputType)) {
+      // If incrementUsage returns false, the limit is reached and a toast is already shown
       return;
     }
     
@@ -77,6 +86,9 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
     }
   };
 
+  const remaining = remainingUsage(inputType);
+  const limitReached = isLimitReached(inputType);
+
   return (
     <motion.form 
       className="w-full neo-blur rounded-2xl p-6 md:p-8"
@@ -90,10 +102,24 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <label htmlFor="text-input" className="block text-sm font-medium text-foreground mb-2">
-          {inputType === 'text' ? 'Enter text' : 
-           inputType === 'url' ? 'Enter URL' : 'Enter YouTube URL'}
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label htmlFor="text-input" className="block text-sm font-medium text-foreground">
+            {inputType === 'text' ? 'Enter text' : 
+            inputType === 'url' ? 'Enter URL' : 'Enter YouTube URL'}
+          </label>
+          
+          {/* Free plan usage indicator */}
+          <div className={`text-xs ${limitReached ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {limitReached ? (
+              <span className="flex items-center">
+                <AlertCircle size={14} className="mr-1" />
+                Limit reached
+              </span>
+            ) : (
+              `${remaining} remaining today`
+            )}
+          </div>
+        </div>
         
         {inputType === 'text' ? (
           <Textarea
@@ -102,6 +128,7 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
             onChange={(e) => setText(e.target.value)}
             placeholder={placeholder || getDefaultPlaceholder()}
             className="min-h-[150px] resize-none transition-all duration-200 focus:shadow-md"
+            disabled={limitReached}
           />
         ) : (
           <Input
@@ -110,6 +137,7 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
             onChange={(e) => setText(e.target.value)}
             placeholder={placeholder || getDefaultPlaceholder()}
             className="transition-all duration-200 focus:shadow-md"
+            disabled={limitReached}
           />
         )}
       </motion.div>
@@ -124,7 +152,7 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
           <label htmlFor="summary-length" className="block text-sm font-medium text-foreground mb-2">
             Summary Length
           </label>
-          <Select value={summaryLength} onValueChange={setSummaryLength}>
+          <Select value={summaryLength} onValueChange={setSummaryLength} disabled={limitReached}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Summary length" />
             </SelectTrigger>
@@ -145,11 +173,29 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
           <Button 
             type="submit" 
             className="w-full bg-primary h-10 transition-all duration-300 hover:shadow-lg hover:bg-primary/90"
+            disabled={limitReached}
           >
-            Summarize
+            {limitReached ? 'Upgrade to Continue' : 'Summarize'}
           </Button>
         </motion.div>
       </div>
+
+      {limitReached && (
+        <motion.div 
+          className="mt-4 p-3 bg-muted/50 rounded-lg text-sm text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          You've reached your free daily limit for {inputType} summaries.
+          <Button 
+            variant="link" 
+            className="mx-auto block"
+            onClick={() => window.location.href = '/pricing'}
+          >
+            Upgrade for unlimited access
+          </Button>
+        </motion.div>
+      )}
     </motion.form>
   );
 };

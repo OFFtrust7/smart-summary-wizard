@@ -2,14 +2,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Form } from '@/components/ui/form';
 import Layout from '@/components/Layout';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock, CreditCard, CheckCircle } from 'lucide-react';
 
 const Payment: React.FC = () => {
   const navigate = useNavigate();
@@ -20,23 +16,20 @@ const Payment: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // In a real app, this would be a call to your Stripe Checkout endpoint
-      // For example: const { data } = await supabase.functions.invoke('create-checkout-session')
-      
-      // Temporary placeholder for demo purposes
+      // Simulate a payment process (in production, this would call your Stripe checkout endpoint)
       setTimeout(() => {
         toast({
-          title: "Redirecting to payment provider",
+          title: "Redirecting to Stripe",
           description: "You'll be redirected to complete your payment",
         });
         
-        // This would normally redirect to Stripe: window.location.href = data.url
-        // For now, simulate success after delay
+        // Simulate successful payment after delay
         setTimeout(() => {
           setIsProcessing(false);
           toast({
             title: "Payment successful!",
             description: "Your subscription has been activated",
+            variant: "default",
           });
           navigate('/dashboard');
         }, 2000);
@@ -79,26 +72,41 @@ const Payment: React.FC = () => {
             </motion.p>
           </div>
 
-          <div className="text-center mb-6">
-            <p className="text-sm text-muted-foreground mb-4">
-              You'll be redirected to our secure payment provider to complete your purchase
-            </p>
-          </div>
+          <motion.div 
+            className="mb-6 p-4 bg-primary/5 rounded-lg border border-primary/10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h3 className="flex items-center text-sm font-medium mb-2">
+              <CheckCircle size={16} className="mr-2 text-green-500" />
+              Premium Plan Benefits
+            </h3>
+            <ul className="text-sm text-muted-foreground space-y-2">
+              <li>• Unlimited text summarization</li>
+              <li>• Unlimited URL/PDF summarization</li>
+              <li>• Unlimited YouTube video summarization</li>
+              <li>• Priority support</li>
+            </ul>
+          </motion.div>
 
           <div className="space-y-4">
             <Button 
               onClick={handlePayment} 
-              className="w-full" 
+              className="w-full flex items-center justify-center" 
               size="lg"
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <div className="flex items-center justify-center">
+                <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
-                </div>
+                </>
               ) : (
-                "Proceed to Payment"
+                <>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Proceed with Stripe Payment
+                </>
               )}
             </Button>
             
@@ -114,12 +122,15 @@ const Payment: React.FC = () => {
           </div>
           
           <div className="mt-8 pt-6 border-t border-border">
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-3">
               <img src="/images/stripe-logo.svg" alt="Stripe" className="h-6" />
               <img src="/images/secure-payment.svg" alt="Secure Payment" className="h-6" />
             </div>
-            <p className="text-xs text-center text-muted-foreground mt-2">
+            <p className="text-xs text-center text-muted-foreground mt-3">
               Payments processed securely through Stripe
+            </p>
+            <p className="text-xs text-center text-muted-foreground mt-2 italic">
+              Your subscription payment will be directly deposited to your connected bank account
             </p>
           </div>
         </div>

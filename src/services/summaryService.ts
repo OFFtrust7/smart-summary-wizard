@@ -5,9 +5,6 @@
  * For demo purposes, we're mocking the API responses.
  */
 
-// Add API_URL when you have a real backend
-// const API_URL = 'http://localhost:5000/summarize';
-
 // Mock summarization function that returns a promise
 export const summarizeText = async (text: string, type: string): Promise<string> => {
   // For demo purposes, simulate API call with a delay
@@ -22,8 +19,6 @@ export const summarizeText = async (text: string, type: string): Promise<string>
       }
       
       // Create a summary based on type
-      const firstSentence = text.split('.')[0] + '.';
-      
       let summary = '';
       
       if (type === 'concise') {
@@ -39,19 +34,65 @@ export const summarizeText = async (text: string, type: string): Promise<string>
   });
 };
 
+// Function to detect if the input is a URL
+export const isUrl = (text: string): boolean => {
+  try {
+    new URL(text);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Function to detect if the input is a YouTube URL
+export const isYouTubeUrl = (text: string): boolean => {
+  return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(text);
+};
+
+// Mock URL summarization (in a real app, this would fetch the content of the URL and summarize it)
+export const summarizeUrl = async (url: string, type: string): Promise<string> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Generate a mock summary for the URL
+      resolve(`This is a summary of the content found at ${url}. The page discusses various topics related to its domain. The main points include information about the organization, its services, and how they benefit users. Some key insights from the article include data about industry trends and future projections. The article concludes with recommendations for readers.`);
+    }, 2000);
+  });
+};
+
+// Mock YouTube summarization (in a real app, this would extract the transcript and summarize it)
+export const summarizeYouTube = async (url: string): Promise<string> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Extract video ID for a more realistic response
+      let videoId = '';
+      try {
+        if (url.includes('youtu.be')) {
+          videoId = url.split('/').pop() || '';
+        } else if (url.includes('youtube.com')) {
+          const urlParams = new URLSearchParams(new URL(url).search);
+          videoId = urlParams.get('v') || '';
+        }
+      } catch (error) {
+        videoId = 'unknown';
+      }
+      
+      // Generate a mock summary for the YouTube video
+      resolve(`Summary of YouTube video (${videoId}): This video discusses important topics related to its subject matter. The presenter begins by introducing the main concepts and then elaborates on each point with examples and demonstrations. Key takeaways include practical advice on implementation and best practices. The video concludes with a summary of the main points and suggestions for further learning resources.`);
+    }, 2500);
+  });
+};
+
 // Mock summary generators
 const generateConciseSummary = (text: string): string => {
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const wordCount = text.split(/\s+/).length;
   
   // Take first sentence and maybe one more based on text length
-  const sentenceCount = wordCount > 100 ? 2 : 1;
+  const sentenceCount = sentences.length > 5 ? 2 : 1;
   return sentences.slice(0, sentenceCount).join('. ') + '.';
 };
 
 const generateBalancedSummary = (text: string): string => {
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const wordCount = text.split(/\s+/).length;
   
   // Take more sentences for a balanced summary
   const sentenceCount = Math.min(Math.ceil(sentences.length / 3), 5);
@@ -80,7 +121,6 @@ const generateBalancedSummary = (text: string): string => {
 
 const generateDetailedSummary = (text: string): string => {
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const wordCount = text.split(/\s+/).length;
   
   // Take more sentences for a detailed summary
   const sentenceCount = Math.min(Math.ceil(sentences.length / 2), 10);
@@ -104,28 +144,3 @@ const generateDetailedSummary = (text: string): string => {
   
   return result.join('. ') + '.';
 };
-
-// This would be used with a real backend API
-/*
-export const summarizeText = async (text: string, type: string): Promise<string> => {
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text, type }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.summary;
-  } catch (error) {
-    console.error('Error summarizing text:', error);
-    throw error;
-  }
-};
-*/
