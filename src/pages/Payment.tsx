@@ -5,53 +5,51 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import Layout from '@/components/Layout';
-import { CreditCard, Lock } from 'lucide-react';
-
-const formSchema = z.object({
-  cardNumber: z.string().min(16, { message: "Please enter a valid card number" }),
-  cardHolder: z.string().min(3, { message: "Please enter the cardholder name" }),
-  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: "Please use MM/YY format" }),
-  cvv: z.string().min(3, { message: "Please enter a valid CVV" }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { Loader2 } from 'lucide-react';
 
 const Payment: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      cardNumber: "",
-      cardHolder: "",
-      expiryDate: "",
-      cvv: "",
-    },
-  });
-
-  function onSubmit(data: FormValues) {
-    setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
+  const handlePayment = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // In a real app, this would be a call to your Stripe Checkout endpoint
+      // For example: const { data } = await supabase.functions.invoke('create-checkout-session')
+      
+      // Temporary placeholder for demo purposes
+      setTimeout(() => {
+        toast({
+          title: "Redirecting to payment provider",
+          description: "You'll be redirected to complete your payment",
+        });
+        
+        // This would normally redirect to Stripe: window.location.href = data.url
+        // For now, simulate success after delay
+        setTimeout(() => {
+          setIsProcessing(false);
+          toast({
+            title: "Payment successful!",
+            description: "Your subscription has been activated",
+          });
+          navigate('/dashboard');
+        }, 2000);
+      }, 1500);
+    } catch (error) {
       setIsProcessing(false);
-      
       toast({
-        title: "Payment successful!",
-        description: "Your subscription has been activated",
+        title: "Payment failed",
+        description: "There was a problem processing your payment",
+        variant: "destructive",
       });
-      
-      // Redirect to dashboard after successful payment
-      navigate('/dashboard');
-    }, 2000);
-  }
+    }
+  };
 
   return (
     <Layout>
@@ -81,91 +79,49 @@ const Payment: React.FC = () => {
             </motion.p>
           </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="cardNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Card Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="1234 5678 9012 3456" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cardHolder"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cardholder Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="expiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiry Date</FormLabel>
-                      <FormControl>
-                        <Input placeholder="MM/YY" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="cvv"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CVV</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="123" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+          <div className="text-center mb-6">
+            <p className="text-sm text-muted-foreground mb-4">
+              You'll be redirected to our secure payment provider to complete your purchase
+            </p>
+          </div>
 
-              <div className="flex items-center my-6 text-xs text-muted-foreground">
-                <Lock className="h-3 w-3 mr-1" />
-                <span>Payments are secure and encrypted</span>
-              </div>
-
+          <div className="space-y-4">
+            <Button 
+              onClick={handlePayment} 
+              className="w-full" 
+              size="lg"
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </div>
+              ) : (
+                "Proceed to Payment"
+              )}
+            </Button>
+            
+            <div className="text-center">
               <Button 
-                type="submit" 
-                className="w-full" 
-                size="lg"
-                disabled={isProcessing}
+                variant="link" 
+                onClick={() => navigate('/pricing')}
+                className="text-sm"
               >
-                {isProcessing ? (
-                  <div className="flex items-center">
-                    <span className="animate-spin mr-2">⏳</span>
-                    Processing...
-                  </div>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Pay Now
-                  </>
-                )}
+                Cancel and return to pricing
               </Button>
-            </form>
-          </Form>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-6 border-t border-border">
+            <div className="flex items-center justify-center space-x-2">
+              <img src="/images/stripe-logo.svg" alt="Stripe" className="h-6" />
+              <img src="/images/secure-payment.svg" alt="Secure Payment" className="h-6" />
+            </div>
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              Payments processed securely through Stripe
+            </p>
+          </div>
         </div>
       </motion.div>
     </Layout>

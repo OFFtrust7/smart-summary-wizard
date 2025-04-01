@@ -73,6 +73,7 @@ const Pricing: React.FC = () => {
     if (plan === "Free") {
       navigate('/dashboard');
     } else {
+      // Both Premium and Team plans go to payment page
       navigate('/payment');
     }
   };
@@ -146,6 +147,14 @@ const Pricing: React.FC = () => {
               </div>
             </motion.div>
           ))}
+        </div>
+        
+        <div className="mt-16 text-center">
+          <div className="inline-flex items-center justify-center p-4 bg-muted rounded-lg">
+            <img src="/images/stripe-logo.svg" alt="Stripe" className="h-6 mx-2" />
+            <span className="mx-2 text-muted-foreground">|</span>
+            <span className="text-sm text-muted-foreground">Secure payments provided by Stripe</span>
+          </div>
         </div>
       </motion.div>
     </Layout>
