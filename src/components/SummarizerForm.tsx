@@ -15,6 +15,7 @@ interface SummarizerFormProps {
   setIsLoading: (loading: boolean) => void;
   inputType?: 'text' | 'url' | 'youtube';
   placeholder?: string;
+  disabled?: boolean; // Added the disabled prop
 }
 
 const SummarizerForm: React.FC<SummarizerFormProps> = ({ 
