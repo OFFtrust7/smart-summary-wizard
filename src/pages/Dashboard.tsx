@@ -9,8 +9,9 @@ import HistoryPanel from '@/components/HistoryPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUp, FileText, History, Upload, User, Youtube } from 'lucide-react';
+import { ArrowUp, FileText, History, Upload, Youtube } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUsageLimits } from '@/contexts/UsageLimitsContext';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +23,17 @@ const Dashboard: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'text');
   const [username, setUsername] = useState('User');
+  
+  // Using the usage limits context
+  const { 
+    usage, 
+    incrementUsage, 
+    isLimitReached, 
+    remainingUsage,
+    getLimits
+  } = useUsageLimits();
+  
+  const limits = getLimits();
   
   // Simulating getting user data after sign in
   useEffect(() => {
@@ -39,10 +51,49 @@ const Dashboard: React.FC = () => {
     }
   }, [tabFromUrl]);
 
+  // Function to handle text summarization
+  const handleTextSummarize = async (text: string) => {
+    // Check if free limit is reached
+    if (!isPremium && !incrementUsage('text')) {
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Simulate API request
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simple summary logic (this would be replaced with a real API call)
+      const words = text.split(' ');
+      const summaryLength = Math.max(Math.floor(words.length * 0.3), 10);
+      const summaryText = words.slice(0, summaryLength).join(' ') + '...';
+      
+      setSummary(summaryText);
+      
+      // Add to history
+      const newEntry = {
+        id: Date.now(),
+        type: 'text',
+        title: `Text Summary ${new Date().toLocaleTimeString()}`,
+        content: summaryText,
+        date: new Date().toISOString()
+      };
+      
+      const history = JSON.parse(localStorage.getItem('summaryHistory') || '[]');
+      localStorage.setItem('summaryHistory', JSON.stringify([newEntry, ...history]));
+      
+    } catch (error) {
+      toast.error("Failed to summarize text");
+      console.error("Text summarization error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Function to handle URL summarization logic
   const handleUrlSummarize = async (url: string) => {
-    if (!isPremium) {
-      toast.error("URL summarization requires a premium account");
+    // Check if free limit is reached
+    if (!isPremium && !incrementUsage('url')) {
       return;
     }
     
@@ -52,6 +103,19 @@ const Dashboard: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       const extractedText = `This is the extracted content from ${url}. In a real application, this would be the actual content from the webpage.`;
       setSummary(extractedText);
+      
+      // Add to history
+      const newEntry = {
+        id: Date.now(),
+        type: 'url',
+        title: `URL: ${url}`,
+        content: extractedText,
+        date: new Date().toISOString()
+      };
+      
+      const history = JSON.parse(localStorage.getItem('summaryHistory') || '[]');
+      localStorage.setItem('summaryHistory', JSON.stringify([newEntry, ...history]));
+      
     } catch (error) {
       toast.error("Failed to extract content from URL");
       console.error("URL extraction error:", error);
@@ -62,8 +126,8 @@ const Dashboard: React.FC = () => {
 
   // Function to handle YouTube summarization logic
   const handleYouTubeSummarize = async (youtubeUrl: string) => {
-    if (!isPremium) {
-      toast.error("YouTube summarization requires a premium account");
+    // Check if free limit is reached
+    if (!isPremium && !incrementUsage('youtube')) {
       return;
     }
     
@@ -101,6 +165,19 @@ const Dashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Function to render usage limits for the active tab
+  const renderUsageLimits = (type: 'text' | 'url' | 'youtube') => {
+    if (isPremium) return null;
+    
+    return (
+      <div className="mt-2 text-sm">
+        <span className={isLimitReached(type) ? "text-destructive" : "text-muted-foreground"}>
+          {remainingUsage(type)} of {limits[type]} free {type} summaries remaining today
+        </span>
+      </div>
+    );
   };
 
   return (
@@ -156,15 +233,15 @@ const Dashboard: React.FC = () => {
               <TabsList className="grid w-full grid-cols-3 mb-8">
                 <TabsTrigger value="text">
                   <FileText className="mr-2 h-4 w-4" />
-                  Text
+                  Text {!isPremium && !isLimitReached('text') && <span className="ml-1 text-xs">({remainingUsage('text')})</span>}
                 </TabsTrigger>
-                <TabsTrigger value="url" disabled={!isPremium}>
+                <TabsTrigger value="url" disabled={!isPremium && isLimitReached('url')}>
                   <Upload className="mr-2 h-4 w-4" />
-                  URL / PDF
+                  URL / PDF {!isPremium && !isLimitReached('url') && <span className="ml-1 text-xs">({remainingUsage('url')})</span>}
                 </TabsTrigger>
-                <TabsTrigger value="youtube" disabled={!isPremium}>
+                <TabsTrigger value="youtube" disabled={!isPremium && isLimitReached('youtube')}>
                   <Youtube className="mr-2 h-4 w-4" />
-                  YouTube
+                  YouTube {!isPremium && !isLimitReached('youtube') && <span className="ml-1 text-xs">({remainingUsage('youtube')})</span>}
                 </TabsTrigger>
               </TabsList>
               
@@ -172,13 +249,17 @@ const Dashboard: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>Text Summarization</CardTitle>
-                    <CardDescription>Paste any text to get an instant summary</CardDescription>
+                    <CardDescription>
+                      Paste any text to get an instant summary
+                      {renderUsageLimits('text')}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <SummarizerForm 
-                      onSummarize={setSummary} 
+                      onSummarize={handleTextSummarize} 
                       setIsLoading={setIsLoading} 
                       inputType="text"
+                      disabled={!isPremium && isLimitReached('text')}
                     />
                     <SummaryResult summary={summary} isLoading={isLoading} />
                   </CardContent>
@@ -186,67 +267,47 @@ const Dashboard: React.FC = () => {
               </TabsContent>
               
               <TabsContent value="url">
-                {isPremium ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>URL & PDF Summarization</CardTitle>
-                      <CardDescription>Upload a PDF or enter a URL to summarize</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <SummarizerForm 
-                        onSummarize={handleUrlSummarize} 
-                        setIsLoading={setIsLoading} 
-                        inputType="url"
-                        placeholder="Enter URL (e.g., https://example.com/article)"
-                      />
-                      <SummaryResult summary={summary} isLoading={isLoading} />
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Premium Feature</CardTitle>
-                      <CardDescription>Upgrade to access URL & PDF summarization</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center py-8">
-                      <Button onClick={() => navigate('/pricing')}>
-                        Upgrade to Premium
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>URL & PDF Summarization</CardTitle>
+                    <CardDescription>
+                      Upload a PDF or enter a URL to summarize
+                      {renderUsageLimits('url')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SummarizerForm 
+                      onSummarize={handleUrlSummarize} 
+                      setIsLoading={setIsLoading} 
+                      inputType="url"
+                      placeholder="Enter URL (e.g., https://example.com/article)"
+                      disabled={!isPremium && isLimitReached('url')}
+                    />
+                    <SummaryResult summary={summary} isLoading={isLoading} />
+                  </CardContent>
+                </Card>
               </TabsContent>
               
               <TabsContent value="youtube">
-                {isPremium ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>YouTube Summarization</CardTitle>
-                      <CardDescription>Paste a YouTube URL to summarize the video</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <SummarizerForm 
-                        onSummarize={handleYouTubeSummarize} 
-                        setIsLoading={setIsLoading}
-                        inputType="youtube"
-                        placeholder="Enter YouTube URL (e.g., https://youtube.com/watch?v=...)"
-                      />
-                      <SummaryResult summary={summary} isLoading={isLoading} />
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Premium Feature</CardTitle>
-                      <CardDescription>Upgrade to access YouTube video summarization</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center py-8">
-                      <Button onClick={() => navigate('/pricing')}>
-                        Upgrade to Premium
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>YouTube Summarization</CardTitle>
+                    <CardDescription>
+                      Paste a YouTube URL to summarize the video
+                      {renderUsageLimits('youtube')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SummarizerForm 
+                      onSummarize={handleYouTubeSummarize} 
+                      setIsLoading={setIsLoading}
+                      inputType="youtube"
+                      placeholder="Enter YouTube URL (e.g., https://youtube.com/watch?v=...)"
+                      disabled={!isPremium && isLimitReached('youtube')}
+                    />
+                    <SummaryResult summary={summary} isLoading={isLoading} />
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           )}

@@ -21,6 +21,8 @@ interface UsageLimitsContextType {
   resetUsage: () => void;
   isLimitReached: (type: 'text' | 'url' | 'youtube') => boolean;
   remainingUsage: (type: 'text' | 'url' | 'youtube') => number;
+  // Added a getter for limits
+  getLimits: () => typeof FREE_PLAN_LIMITS;
 }
 
 const UsageLimitsContext = createContext<UsageLimitsContextType | null>(null);
@@ -80,12 +82,18 @@ export function UsageLimitsProvider({ children }: { children: React.ReactNode })
     return Math.max(0, FREE_PLAN_LIMITS[type] - usage[type]);
   };
 
+  // Added a getter function for limits
+  const getLimits = () => {
+    return FREE_PLAN_LIMITS;
+  };
+
   const value = {
     usage,
     incrementUsage,
     resetUsage,
     isLimitReached,
-    remainingUsage
+    remainingUsage,
+    getLimits
   };
 
   return (
