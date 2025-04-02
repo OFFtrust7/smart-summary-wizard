@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
 import { summarizeText } from '@/services/summaryService';
 
-type SummaryLength = 'concise' | 'balanced' | 'detailed';
-type InputType = 'text' | 'url' | 'youtube';
+export type SummaryLength = 'concise' | 'balanced' | 'detailed';
+export type InputType = 'text' | 'url' | 'youtube';
 
 interface UseSummarizerFormProps {
   onSummarize: (summary: string) => void;
