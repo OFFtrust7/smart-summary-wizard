@@ -16,25 +16,35 @@ const Payment: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // Simulate a payment process (in production, this would call your Stripe checkout endpoint)
-      setTimeout(() => {
-        toast({
-          title: "Redirecting to Stripe",
-          description: "You'll be redirected to complete your payment",
-        });
-        
-        // Simulate successful payment after delay
-        setTimeout(() => {
-          setIsProcessing(false);
-          toast({
-            title: "Payment successful!",
-            description: "Your subscription has been activated",
-            variant: "default",
-          });
-          navigate('/dashboard');
-        }, 2000);
-      }, 1500);
+      // Redirect to Stripe Checkout
+      const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer pk_test_51R99xRFxc16u5qac16ZIRiQHJhbQGOkT3YqIQCOaeFM9xgQjEo8qS44Y5ynJKLvDfCcptvVJxJD5lT7o7zSKUuAY00qKx1xLgr`
+        },
+        body: new URLSearchParams({
+          'success_url': `${window.location.origin}/payment-success`,
+          'cancel_url': `${window.location.origin}/payment-canceled`,
+          'mode': 'payment',
+          'line_items[0][price_data][currency]': 'usd',
+          'line_items[0][price_data][product_data][name]': 'Premium Plan - Monthly',
+          'line_items[0][price_data][unit_amount]': '999',
+          'line_items[0][quantity]': '1'
+        }).toString()
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+      
+      const session = await response.json();
+      
+      // Redirect to checkout
+      window.location.href = session.url;
+      
     } catch (error) {
+      console.error('Payment error:', error);
       setIsProcessing(false);
       toast({
         title: "Payment failed",
