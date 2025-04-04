@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
-import { Loader2, Lock, CreditCard, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, Lock, CreditCard, CheckCircle, AlertTriangle, CreditCard as CardIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Payment: React.FC = () => {
   const navigate = useNavigate();
@@ -20,32 +22,102 @@ const Payment: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'card'>('stripe');
   
-  const handlePayment = async () => {
+  // Form state for direct card payment
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardFormErrors, setCardFormErrors] = useState<Record<string, string>>({});
+  
+  const validateCardForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length !== 16) {
+      errors.cardNumber = 'Please enter a valid 16-digit card number';
+    }
+    
+    if (!cardExpiry.trim() || !/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+      errors.cardExpiry = 'Please enter a valid expiry date (MM/YY)';
+    }
+    
+    if (!cardCvc.trim() || cardCvc.length < 3) {
+      errors.cardCvc = 'Please enter a valid CVC';
+    }
+    
+    if (!cardName.trim()) {
+      errors.cardName = 'Please enter the cardholder name';
+    }
+    
+    setCardFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const formatCardNumber = (value: string) => {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, '');
+    
+    // Add a space after every 4 digits
+    const formatted = cleaned.replace(/(\d{4})(?=\d)/g, '$1 ');
+    
+    // Limit to 16 digits plus spaces
+    return formatted.substring(0, 19);
+  };
+  
+  const formatExpiry = (value: string) => {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, '');
+    
+    // Format as MM/YY
+    if (cleaned.length >= 3) {
+      return `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}`;
+    }
+    return cleaned;
+  };
+  
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCardNumber(formatCardNumber(e.target.value));
+  };
+  
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCardExpiry(formatExpiry(e.target.value));
+  };
+  
+  const handleProcessPayment = async () => {
     try {
       setIsProcessing(true);
       setPaymentError(null);
       
-      // In a production environment, this should call a secure backend API
-      // that creates the Stripe checkout session with your secret key
-      
-      toast({
-        title: "Processing payment",
-        description: "Please wait while we prepare your payment session...",
-      });
+      if (paymentMethod === 'card') {
+        // Validate card form
+        if (!validateCardForm()) {
+          setIsProcessing(false);
+          return;
+        }
+        
+        // In a real implementation, this would securely tokenize the card details
+        // and send them to your backend API, which would then use Stripe's API
+        // to process the payment. NEVER process card details directly in the frontend.
+        
+        toast({
+          title: "Processing your card",
+          description: "Please wait while we securely process your payment...",
+        });
+      } else {
+        // Stripe Checkout flow
+        toast({
+          title: "Processing payment",
+          description: "Please wait while we prepare your payment session...",
+        });
+      }
       
       // Simulate API call and redirect
       setTimeout(() => {
         try {
-          // For demo purposes only - this simulates a successful payment
-          // In a real implementation, you would:
-          // 1. Call your backend API to create a Stripe session
-          // 2. Redirect to Stripe checkout URL from the response
-          // 3. Let Stripe handle the payment processing
-          // 4. Use webhooks to confirm successful payments
-          
-          // Simulate successful payment (in production this would be handled by Stripe)
-          const paymentSuccess = Math.random() > 0.3; // 70% success rate for demo
+          // For demo purposes only
+          // In a real implementation, you would integrate with a backend API
+          const paymentSuccess = Math.random() > 0.2; // 80% success rate for demo
           
           if (paymentSuccess) {
             // Mark user as premium in local storage for demo purposes
@@ -94,7 +166,7 @@ const Payment: React.FC = () => {
     setPaymentError(null);
     // Wait a moment before retrying to avoid rapid clicks
     setTimeout(() => {
-      handlePayment();
+      handleProcessPayment();
     }, 500);
   };
 
@@ -144,25 +216,137 @@ const Payment: React.FC = () => {
             </ul>
           </motion.div>
 
-          <div className="space-y-4">
-            <Button 
-              onClick={handlePayment} 
-              className="w-full flex items-center justify-center" 
-              size="lg"
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Complete Payment with Stripe
-                </>
-              )}
-            </Button>
+          <div className="space-y-6">
+            <Tabs defaultValue="stripe" className="w-full" onValueChange={(value) => setPaymentMethod(value as 'stripe' | 'card')}>
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="stripe" className="flex items-center justify-center">
+                  <img src="/images/stripe-logo.svg" alt="Stripe" className="h-5 mr-2" />
+                  Stripe Checkout
+                </TabsTrigger>
+                <TabsTrigger value="card" className="flex items-center justify-center">
+                  <CardIcon className="h-4 w-4 mr-2" />
+                  Credit Card
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="stripe" className="mt-0">
+                <Button 
+                  onClick={handleProcessPayment} 
+                  className="w-full flex items-center justify-center" 
+                  size="lg"
+                  disabled={isProcessing}
+                >
+                  {isProcessing && paymentMethod === 'stripe' ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Proceed with Stripe Payment
+                    </>
+                  )}
+                </Button>
+                <div className="flex items-center justify-center mt-4">
+                  <img src="/images/secure-payment.svg" alt="Secure Payment" className="h-6" />
+                  <span className="text-xs text-muted-foreground ml-2">Secure payments via Stripe</span>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="card" className="mt-0">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="card-name" className="text-sm font-medium">Cardholder Name</label>
+                    <input
+                      id="card-name"
+                      type="text"
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="John Doe"
+                    />
+                    {cardFormErrors.cardName && (
+                      <p className="text-xs text-destructive mt-1">{cardFormErrors.cardName}</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="card-number" className="text-sm font-medium">Card Number</label>
+                    <input
+                      id="card-number"
+                      type="text"
+                      value={cardNumber}
+                      onChange={handleCardNumberChange}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="1234 5678 9012 3456"
+                      maxLength={19}
+                    />
+                    {cardFormErrors.cardNumber && (
+                      <p className="text-xs text-destructive mt-1">{cardFormErrors.cardNumber}</p>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label htmlFor="card-expiry" className="text-sm font-medium">Expiry Date</label>
+                      <input
+                        id="card-expiry"
+                        type="text"
+                        value={cardExpiry}
+                        onChange={handleExpiryChange}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="MM/YY"
+                        maxLength={5}
+                      />
+                      {cardFormErrors.cardExpiry && (
+                        <p className="text-xs text-destructive mt-1">{cardFormErrors.cardExpiry}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label htmlFor="card-cvc" className="text-sm font-medium">CVC</label>
+                      <input
+                        id="card-cvc"
+                        type="text"
+                        value={cardCvc}
+                        onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, '').substring(0, 4))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="123"
+                        maxLength={4}
+                      />
+                      {cardFormErrors.cardCvc && (
+                        <p className="text-xs text-destructive mt-1">{cardFormErrors.cardCvc}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleProcessPayment} 
+                    className="w-full flex items-center justify-center mt-2" 
+                    size="lg"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing && paymentMethod === 'card' ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing Card...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="mr-2 h-4 w-4" />
+                        Pay Securely
+                      </>
+                    )}
+                  </Button>
+                  
+                  <div className="flex items-center justify-center mt-1">
+                    <Lock className="h-3 w-3 text-muted-foreground mr-1" />
+                    <span className="text-xs text-muted-foreground">Your card details are securely encrypted</span>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
             
             <div className="text-center">
               <Button 
@@ -176,10 +360,6 @@ const Payment: React.FC = () => {
           </div>
           
           <div className="mt-8 pt-6 border-t border-border">
-            <div className="flex items-center justify-center space-x-3">
-              <img src="/images/stripe-logo.svg" alt="Stripe" className="h-6" />
-              <img src="/images/secure-payment.svg" alt="Secure Payment" className="h-6" />
-            </div>
             <p className="text-xs text-center text-muted-foreground mt-3">
               Payments processed securely through Stripe
             </p>
@@ -202,6 +382,12 @@ const Payment: React.FC = () => {
               {paymentError || "There was an issue processing your payment. Please try again."}
             </DialogDescription>
           </DialogHeader>
+          <Alert variant="destructive" className="mt-2">
+            <AlertTitle className="text-sm">Payment could not be completed</AlertTitle>
+            <AlertDescription className="text-xs">
+              Please check your payment details and try again, or use a different payment method.
+            </AlertDescription>
+          </Alert>
           <div className="flex justify-end space-x-4 mt-4">
             <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
               Cancel
