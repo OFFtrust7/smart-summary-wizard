@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
+import { generateYouTubeSummary } from '@/services/youtubeService';
 
 interface SummaryHistory {
   id: number;
@@ -85,17 +86,22 @@ export function useSummary() {
     
     setIsLoading(true);
     try {
-      // Extract video ID and simulate transcript extraction
+      // Extract video ID for display in history
       const videoId = youtubeUrl.includes('v=') 
         ? youtubeUrl.split('v=')[1].split('&')[0]
         : youtubeUrl.split('/').pop();
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const simulatedTranscript = `This is a simulated transcript for YouTube video ID: ${videoId}. In a real application, this would be the actual transcript or summary of the video content.`;
-      setSummary(simulatedTranscript);
+      // Call the actual API service
+      const summaryResult = await generateYouTubeSummary(youtubeUrl);
       
-      // Add to history
-      addToHistory('youtube', `YouTube Video: ${videoId}`, simulatedTranscript);
+      if (summaryResult.success) {
+        setSummary(summaryResult.script);
+        
+        // Add to history
+        addToHistory('youtube', `YouTube: ${videoId}`, summaryResult.script);
+      } else {
+        toast.error(summaryResult.error || "Failed to summarize YouTube video");
+      }
       
     } catch (error) {
       toast.error("Failed to summarize YouTube video");

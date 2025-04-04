@@ -27,6 +27,7 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
   const { toast } = useToast();
   const type = 'youtube';
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<boolean>(false);
   
   const renderUsageLimits = () => {
     if (isPremium) return null;
@@ -42,7 +43,7 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
 
   const isValidYoutubeUrl = (url: string): boolean => {
     // More comprehensive YouTube URL validation
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}.*$/;
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)[a-zA-Z0-9_-]{11}.*$/;
     return youtubeRegex.test(url);
   };
   
@@ -87,7 +88,7 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
       <CardHeader>
         <CardTitle>YouTube Summarization</CardTitle>
         <CardDescription>
-          Paste a YouTube URL to summarize the video content
+          Paste a YouTube URL to generate a professional summary of the video content
           {renderUsageLimits()}
         </CardDescription>
       </CardHeader>
@@ -95,10 +96,10 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
         <div className="mb-4">
           <Alert>
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Tips for best results</AlertTitle>
+            <AlertTitle>Advanced AI Summarization</AlertTitle>
             <AlertDescription>
-              For best results, use videos with clear spoken content. The summarizer works best with educational videos, 
-              presentations, and talks rather than music videos or action-heavy content.
+              Our enhanced YouTube summarizer uses AI to transcribe and summarize video content. 
+              Works with standard videos, shorts, and more. For best results, use videos with clear spoken content.
             </AlertDescription>
           </Alert>
         </div>
@@ -114,8 +115,8 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
           onSummarize={handleSummarize} 
           setIsLoading={setIsLoading}
           inputType="youtube"
-          placeholder="Enter YouTube URL (e.g., https://youtube.com/watch?v=...)"
-          disabled={!isPremium && isLimitReached(type)}
+          placeholder="Enter YouTube URL (e.g., https://youtube.com/watch?v=... or https://youtu.be/...)"
+          disabled={(!isPremium && isLimitReached(type)) || processing}
         />
         <SummaryResult summary={summary} isLoading={isLoading} />
       </CardContent>

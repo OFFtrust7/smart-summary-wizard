@@ -13,14 +13,22 @@ import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
 import Dashboard from "./pages/Dashboard";
 import { UsageLimitsProvider } from "./contexts/UsageLimitsContext";
+import { env } from "./config/env";
+import { configureYouTubeService } from "./services/youtubeService";
 
 // Create a client
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Set document title
+  // Set document title and configure services
   useEffect(() => {
     document.title = "SnapSummary - AI-powered Text Summarization";
+    
+    // Initialize the YouTube service with the backend API URL
+    configureYouTubeService(env.BACKEND_API_URL);
+    
+    // Log company contact information for verification
+    console.log(`Contact: ${env.COMPANY_EMAIL}`);
   }, []);
 
   return (
