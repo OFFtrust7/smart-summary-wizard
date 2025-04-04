@@ -17,7 +17,8 @@ const defaultConfig: EnvConfig = {
   BACKEND_API_URL: import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000',
   COMPANY_EMAIL: import.meta.env.VITE_COMPANY_EMAIL || 'contact@snapsummary.com',
   COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'SnapSummary',
-  ENABLE_YOUTUBE_SUMMARIZER: true,
+  // Parse string 'true'/'false' to boolean - default to true if not specified
+  ENABLE_YOUTUBE_SUMMARIZER: import.meta.env.VITE_ENABLE_YOUTUBE_SUMMARIZER !== 'false',
 };
 
 // Export the environment configuration

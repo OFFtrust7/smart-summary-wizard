@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
 import { generateYouTubeSummary } from '@/services/youtubeService';
+import { env } from '@/config/env';
 
 interface SummaryHistory {
   id: number;
@@ -84,12 +85,19 @@ export function useSummary() {
       return;
     }
     
+    if (!env.ENABLE_YOUTUBE_SUMMARIZER) {
+      toast.error("YouTube summarization is currently disabled");
+      return;
+    }
+    
     setIsLoading(true);
     try {
       // Extract video ID for display in history
       const videoId = youtubeUrl.includes('v=') 
         ? youtubeUrl.split('v=')[1].split('&')[0]
         : youtubeUrl.split('/').pop();
+      
+      console.log(`Attempting to summarize YouTube video: ${youtubeUrl}`);
       
       // Call the actual API service
       const summaryResult = await generateYouTubeSummary(youtubeUrl);
@@ -99,8 +107,10 @@ export function useSummary() {
         
         // Add to history
         addToHistory('youtube', `YouTube: ${videoId}`, summaryResult.script);
+        toast.success("YouTube summary generated successfully!");
       } else {
         toast.error(summaryResult.error || "Failed to summarize YouTube video");
+        console.error("YouTube summarization failed:", summaryResult.error);
       }
       
     } catch (error) {

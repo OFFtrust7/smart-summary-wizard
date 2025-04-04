@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import SummarizerForm from '@/components/SummarizerForm';
 import SummaryResult from '@/components/SummaryResult';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { env } from '@/config/env';
 
 interface YouTubeSummaryTabProps {
   summary: string;
@@ -24,7 +26,7 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
   isPremium
 }) => {
   const { isLimitReached, remainingUsage, getLimits } = useUsageLimits();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const type = 'youtube';
   const [validationError, setValidationError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
@@ -52,34 +54,30 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
     
     if (!url.trim()) {
       setValidationError("Please enter a YouTube URL");
-      toast({
-        title: "Error",
-        description: "Please enter a YouTube URL",
-        variant: "destructive",
-      });
+      toast.error("Please enter a YouTube URL");
       return;
     }
     
     if (!isValidYoutubeUrl(url)) {
       setValidationError("Please enter a valid YouTube URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ)");
-      toast({
-        title: "Invalid YouTube URL",
-        description: "Please enter a valid YouTube URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ)",
-        variant: "destructive",
-      });
+      toast.error("Please enter a valid YouTube URL");
+      return;
+    }
+    
+    // Check if the feature is enabled
+    if (!env.ENABLE_YOUTUBE_SUMMARIZER) {
+      toast.error("YouTube summarization is currently disabled");
+      setValidationError("YouTube summarization is currently disabled. Please check your backend configuration.");
       return;
     }
     
     if (!isPremium && isLimitReached(type)) {
-      toast({
-        title: "Usage limit reached",
-        description: "You've reached the free limit for YouTube summaries. Please upgrade to Premium.",
-        variant: "destructive",
-      });
+      toast.error("You've reached the free limit for YouTube summaries");
       return;
     }
     
     // If all validations pass, call the onSummarize function
+    setProcessing(true);
     onSummarize(url);
   };
 
@@ -116,8 +114,25 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
           setIsLoading={setIsLoading}
           inputType="youtube"
           placeholder="Enter YouTube URL (e.g., https://youtube.com/watch?v=... or https://youtu.be/...)"
-          disabled={(!isPremium && isLimitReached(type)) || processing}
+          disabled={(!isPremium && isLimitReached(type)) || processing || isLoading}
         />
+        
+        {!isLoading && !summary && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            <p>
+              <a 
+                href="/BACKEND_SETUP.md" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center text-primary underline"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                View backend setup instructions
+              </a>
+            </p>
+          </div>
+        )}
+        
         <SummaryResult summary={summary} isLoading={isLoading} />
       </CardContent>
     </Card>

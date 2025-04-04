@@ -25,7 +25,12 @@ const App = () => {
     document.title = "SnapSummary - AI-powered Text Summarization";
     
     // Initialize the YouTube service with the backend API URL
-    configureYouTubeService(env.BACKEND_API_URL);
+    if (env.ENABLE_YOUTUBE_SUMMARIZER) {
+      configureYouTubeService(env.BACKEND_API_URL);
+      console.log("YouTube summarizer enabled");
+    } else {
+      console.log("YouTube summarizer disabled");
+    }
     
     // Log company contact information for verification
     console.log(`Contact: ${env.COMPANY_EMAIL}`);

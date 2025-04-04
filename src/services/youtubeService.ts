@@ -1,8 +1,8 @@
 
 import { toast } from 'sonner';
 
-// Configuration constants
-const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000';
+// Default API URL - will be overridden by configureYouTubeService
+let API_URL = '';
 
 interface SummaryResponse {
   success: boolean;
@@ -36,6 +36,8 @@ This summary was generated without actually processing the video since we're in 
       };
     }
 
+    console.log(`Making API request to: ${API_URL}/generate-script`);
+    
     // Real API call
     const response = await fetch(`${API_URL}/generate-script`, {
       method: 'POST',
@@ -46,7 +48,15 @@ This summary was generated without actually processing the video since we're in 
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
+      let errorData;
+      
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { detail: errorText || 'Unknown error' };
+      }
+      
       console.error("YouTube API error:", errorData);
       return {
         success: false,
@@ -63,7 +73,7 @@ This summary was generated without actually processing the video since we're in 
     console.error("YouTube summarization error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred"
+      error: error instanceof Error ? error.message : "Unable to connect to the summarization service"
     };
   }
 }
@@ -72,10 +82,12 @@ This summary was generated without actually processing the video since we're in 
  * Configure the YouTube service with environment variables
  * This should be called when the application starts
  */
-export function configureYouTubeService(backendUrl?: string): void {
-  // You can add additional configuration here if needed
-  if (backendUrl && backendUrl !== API_URL) {
-    console.log(`YouTube service configured with backend URL: ${backendUrl}`);
-    // In a real app, you might want to store this in a context or state management
+export function configureYouTubeService(backendUrl: string): void {
+  if (!backendUrl) {
+    console.error("YouTube service configuration failed: No backend URL provided");
+    return;
   }
+  
+  API_URL = backendUrl;
+  console.log(`YouTube service configured with backend URL: ${API_URL}`);
 }
