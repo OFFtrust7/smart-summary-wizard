@@ -16,32 +16,35 @@ const Payment: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // Redirect to Stripe Checkout
-      const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer pk_test_51R99xRFxc16u5qac16ZIRiQHJhbQGOkT3YqIQCOaeFM9xgQjEo8qS44Y5ynJKLvDfCcptvVJxJD5lT7o7zSKUuAY00qKx1xLgr`
-        },
-        body: new URLSearchParams({
-          'success_url': `${window.location.origin}/payment-success`,
-          'cancel_url': `${window.location.origin}/payment-canceled`,
-          'mode': 'payment',
-          'line_items[0][price_data][currency]': 'usd',
-          'line_items[0][price_data][product_data][name]': 'Premium Plan - Monthly',
-          'line_items[0][price_data][unit_amount]': '999',
-          'line_items[0][quantity]': '1'
-        }).toString()
+      // In a production environment, this should call a secure backend API
+      // that creates the Stripe checkout session with your secret key
+      
+      // For demo purposes, we'll simulate a successful payment
+      // IMPORTANT: This is just for demonstration, in a real app you should use a backend endpoint
+      
+      toast({
+        title: "Processing payment",
+        description: "Please wait while we prepare your payment session...",
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
-      }
-      
-      const session = await response.json();
-      
-      // Redirect to checkout
-      window.location.href = session.url;
+      // Simulate API call and redirect
+      setTimeout(() => {
+        // In a real implementation, this would be where we'd redirect to Stripe
+        // For demo, we'll simulate successful payment and redirect to success page
+        setIsProcessing(false);
+        
+        // Mark user as premium in local storage for demo purposes
+        localStorage.setItem('isPremium', 'true');
+        
+        toast({
+          title: "Payment successful!",
+          description: "Your premium access is now activated",
+          variant: "default",
+        });
+        
+        // Redirect to dashboard with premium features enabled
+        navigate('/payment-success');
+      }, 2000);
       
     } catch (error) {
       console.error('Payment error:', error);
@@ -114,8 +117,8 @@ const Payment: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Lock className="mr-2 h-4 w-4" />
-                  Proceed with Stripe Payment
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Complete Payment
                 </>
               )}
             </Button>
@@ -139,8 +142,8 @@ const Payment: React.FC = () => {
             <p className="text-xs text-center text-muted-foreground mt-3">
               Payments processed securely through Stripe
             </p>
-            <p className="text-xs text-center text-muted-foreground mt-2 italic">
-              Your subscription payment will be directly deposited to your connected bank account
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              Questions? Contact us at <a href="mailto:support@snapsummary.com" className="text-primary hover:underline">support@snapsummary.com</a>
             </p>
           </div>
         </div>

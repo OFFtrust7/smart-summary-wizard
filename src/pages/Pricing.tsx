@@ -72,9 +72,11 @@ const Pricing: React.FC = () => {
   const handlePlanSelect = (plan: string) => {
     if (plan === "Free") {
       navigate('/dashboard');
-    } else {
-      // Both Premium and Team plans go to payment page
+    } else if (plan === "Premium") {
       navigate('/payment');
+    } else {
+      // For Team plan, open email client
+      window.location.href = 'mailto:sales@snapsummary.com?subject=Team Plan Inquiry&body=I am interested in learning more about the Team plan.';
     }
   };
 
@@ -149,11 +151,18 @@ const Pricing: React.FC = () => {
           ))}
         </div>
         
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center space-y-4">
           <div className="inline-flex items-center justify-center p-4 bg-muted rounded-lg">
             <img src="/images/stripe-logo.svg" alt="Stripe" className="h-6 mx-2" />
             <span className="mx-2 text-muted-foreground">|</span>
             <span className="text-sm text-muted-foreground">Secure payments provided by Stripe</span>
+          </div>
+          
+          <div className="text-center text-muted-foreground">
+            <p>Have questions about our plans? Contact our sales team at</p>
+            <a href="mailto:sales@snapsummary.com" className="text-primary hover:underline">
+              sales@snapsummary.com
+            </a>
           </div>
         </div>
       </motion.div>

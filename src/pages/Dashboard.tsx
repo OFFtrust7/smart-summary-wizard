@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Upload, Youtube } from 'lucide-react';
@@ -12,14 +12,17 @@ import UrlSummaryTab from '@/components/dashboard/UrlSummaryTab';
 import YouTubeSummaryTab from '@/components/dashboard/YouTubeSummaryTab';
 import { useSummary } from '@/hooks/useSummary';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const Dashboard: React.FC = () => {
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const [isPremium] = useState(false); // In a real app, this would come from auth state
+  const [isPremium, setIsPremium] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'text');
   const [username, setUsername] = useState('User');
+  const location = useLocation();
+  const { toast } = useToast();
   
   const { isLimitReached, remainingUsage } = useUsageLimits();
   const { 
@@ -32,9 +35,26 @@ const Dashboard: React.FC = () => {
     handleYouTubeSummarize 
   } = useSummary();
   
-  // Simulating getting user data after sign in
+  // Check for payment success
   useEffect(() => {
-    // In a real app, this would come from auth state or API
+    if (location.pathname === '/payment-success') {
+      // Mark the user as premium
+      localStorage.setItem('isPremium', 'true');
+      toast({
+        title: "Payment Successful!",
+        description: "Welcome to Premium! You now have unlimited access to all features.",
+        variant: "default",
+      });
+    }
+  }, [location.pathname, toast]);
+  
+  // Check premium status and get user data
+  useEffect(() => {
+    // Check if user has premium status
+    const premiumStatus = localStorage.getItem('isPremium') === 'true';
+    setIsPremium(premiumStatus);
+    
+    // Get username if available
     const savedUsername = localStorage.getItem('username');
     if (savedUsername) {
       setUsername(savedUsername);
