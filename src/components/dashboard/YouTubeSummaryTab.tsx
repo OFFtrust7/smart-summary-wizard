@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SummarizerForm from '@/components/SummarizerForm';
 import SummaryResult from '@/components/SummaryResult';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/components/ui/use-toast';
 
 interface YouTubeSummaryTabProps {
   summary: string;
@@ -23,7 +24,9 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
   isPremium
 }) => {
   const { isLimitReached, remainingUsage, getLimits } = useUsageLimits();
+  const { toast } = useToast();
   const type = 'youtube';
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   const renderUsageLimits = () => {
     if (isPremium) return null;
@@ -38,15 +41,44 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
   };
 
   const isValidYoutubeUrl = (url: string): boolean => {
+    // More comprehensive YouTube URL validation
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}.*$/;
     return youtubeRegex.test(url);
   };
   
   const handleSummarize = (url: string) => {
-    if (!isValidYoutubeUrl(url)) {
-      alert("Please enter a valid YouTube URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ)");
+    setValidationError(null);
+    
+    if (!url.trim()) {
+      setValidationError("Please enter a YouTube URL");
+      toast({
+        title: "Error",
+        description: "Please enter a YouTube URL",
+        variant: "destructive",
+      });
       return;
     }
+    
+    if (!isValidYoutubeUrl(url)) {
+      setValidationError("Please enter a valid YouTube URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ)");
+      toast({
+        title: "Invalid YouTube URL",
+        description: "Please enter a valid YouTube URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!isPremium && isLimitReached(type)) {
+      toast({
+        title: "Usage limit reached",
+        description: "You've reached the free limit for YouTube summaries. Please upgrade to Premium.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If all validations pass, call the onSummarize function
     onSummarize(url);
   };
 
@@ -70,6 +102,13 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
             </AlertDescription>
           </Alert>
         </div>
+        
+        {validationError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{validationError}</AlertDescription>
+          </Alert>
+        )}
         
         <SummarizerForm 
           onSummarize={handleSummarize} 
