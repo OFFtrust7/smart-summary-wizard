@@ -51,16 +51,19 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
   
   const handleSummarize = (url: string) => {
     setValidationError(null);
+    setProcessing(true);
     
     if (!url.trim()) {
       setValidationError("Please enter a YouTube URL");
       toast.error("Please enter a YouTube URL");
+      setProcessing(false);
       return;
     }
     
     if (!isValidYoutubeUrl(url)) {
       setValidationError("Please enter a valid YouTube URL (e.g., https://youtube.com/watch?v=dQw4w9WgXcQ)");
       toast.error("Please enter a valid YouTube URL");
+      setProcessing(false);
       return;
     }
     
@@ -68,16 +71,17 @@ const YouTubeSummaryTab: React.FC<YouTubeSummaryTabProps> = ({
     if (!env.ENABLE_YOUTUBE_SUMMARIZER) {
       toast.error("YouTube summarization is currently disabled");
       setValidationError("YouTube summarization is currently disabled. Please check your backend configuration.");
+      setProcessing(false);
       return;
     }
     
     if (!isPremium && isLimitReached(type)) {
       toast.error("You've reached the free limit for YouTube summaries");
+      setProcessing(false);
       return;
     }
     
     // If all validations pass, call the onSummarize function
-    setProcessing(true);
     onSummarize(url);
   };
 

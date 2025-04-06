@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SummaryResultProps {
   summary: string;
@@ -70,16 +71,18 @@ const SummaryResult: React.FC<SummaryResultProps> = ({ summary, isLoading }) => 
           </Button>
         </div>
         
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="prose prose-sm max-w-none"
-        >
-          <div className="whitespace-pre-wrap text-balance leading-relaxed">
-            {summary}
-          </div>
-        </motion.div>
+        <ScrollArea className="h-[400px] pr-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="prose prose-sm max-w-none"
+          >
+            <div className="text-balance leading-relaxed whitespace-pre-wrap">
+              {summary}
+            </div>
+          </motion.div>
+        </ScrollArea>
       </motion.div>
     </AnimatePresence>
   );

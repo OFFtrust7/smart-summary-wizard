@@ -65,6 +65,10 @@ This summary was generated without actually processing the video since we're in 
     }
 
     const data = await response.json();
+    
+    // Make sure we're getting the full script without truncation
+    console.log("Received script length:", data.script?.length || 0);
+    
     return {
       success: true,
       script: data.script

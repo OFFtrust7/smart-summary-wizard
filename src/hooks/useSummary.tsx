@@ -102,7 +102,9 @@ export function useSummary() {
       // Call the actual API service
       const summaryResult = await generateYouTubeSummary(youtubeUrl);
       
-      if (summaryResult.success) {
+      if (summaryResult.success && summaryResult.script) {
+        // Ensure we're getting the full script without truncation
+        console.log("Summary length:", summaryResult.script.length);
         setSummary(summaryResult.script);
         
         // Add to history
