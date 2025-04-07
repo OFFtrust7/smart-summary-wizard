@@ -11,6 +11,10 @@ interface EnvConfig {
   // Feature flags
   ENABLE_YOUTUBE_SUMMARIZER: boolean;
   ENABLE_AI_ASSISTANT: boolean;
+
+  // Helper methods
+  isDevelopment?: () => boolean;
+  isProduction?: () => boolean;
 }
 
 // Default configuration for development
@@ -23,12 +27,6 @@ const defaultConfig: EnvConfig = {
   ENABLE_AI_ASSISTANT: import.meta.env.VITE_ENABLE_AI_ASSISTANT !== 'false',
 };
 
-// Export the environment configuration
-export const env: EnvConfig = {
-  ...defaultConfig,
-  // Override with any environment-specific settings here
-};
-
 // Helper to check if we're in a development environment
 export const isDevelopment = (): boolean => {
   return import.meta.env.DEV || import.meta.env.MODE === 'development';
@@ -39,6 +37,10 @@ export const isProduction = (): boolean => {
   return import.meta.env.PROD || import.meta.env.MODE === 'production';
 };
 
-// Add helper methods to the env object
-env.isDevelopment = isDevelopment;
-env.isProduction = isProduction;
+// Export the environment configuration
+export const env: EnvConfig = {
+  ...defaultConfig,
+  // Override with any environment-specific settings here
+  isDevelopment,
+  isProduction
+};
