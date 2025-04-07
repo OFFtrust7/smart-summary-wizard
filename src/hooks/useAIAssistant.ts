@@ -34,7 +34,9 @@ export function useAIAssistant() {
     setError(null);
 
     try {
+      console.log("Sending message to AI assistant:", prompt);
       const response = await generateAIResponse(prompt);
+      console.log("AI assistant response:", response);
 
       if (response.success && response.text) {
         // Add assistant response to the conversation
@@ -47,11 +49,14 @@ export function useAIAssistant() {
 
         setMessages(prev => [...prev, assistantMessage]);
       } else {
-        setError(response.error || "Failed to generate response");
-        toast.error(response.error || "Failed to generate response");
+        const errorMessage = response.error || "Failed to generate response";
+        setError(errorMessage);
+        console.error("AI Assistant error:", errorMessage);
+        toast.error(errorMessage);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to communicate with AI assistant";
+      console.error("AI Assistant catch error:", errorMessage);
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {

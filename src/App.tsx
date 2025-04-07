@@ -34,8 +34,13 @@ const App = () => {
     }
     
     // Initialize the AI Assistant service with the backend API URL
-    configureAIAssistantService(env.BACKEND_API_URL);
-    console.log("AI Assistant service initialized");
+    if (env.ENABLE_AI_ASSISTANT) {
+      configureAIAssistantService(env.BACKEND_API_URL);
+      console.log("AI Assistant service initialized");
+    } else {
+      console.log("AI Assistant service disabled");
+      configureAIAssistantService(""); // Initialize with empty string to use mock responses
+    }
     
     // Log company contact information for verification
     console.log(`Contact: ${env.COMPANY_EMAIL}`);

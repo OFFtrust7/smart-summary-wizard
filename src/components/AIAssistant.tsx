@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { useAIAssistant, Message } from '@/hooks/useAIAssistant';
-import { Send, RefreshCw, Bot, User } from 'lucide-react';
+import { Send, RefreshCw, Bot, User, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const MessageItem: React.FC<{ message: Message }> = ({ message }) => {
   return (
@@ -39,7 +40,7 @@ const MessageItem: React.FC<{ message: Message }> = ({ message }) => {
 };
 
 const AIAssistant: React.FC = () => {
-  const { messages, isLoading, sendMessage, clearConversation } = useAIAssistant();
+  const { messages, isLoading, error, sendMessage, clearConversation } = useAIAssistant();
   const [prompt, setPrompt] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -56,11 +57,25 @@ const AIAssistant: React.FC = () => {
     }
   }, []);
 
+  // Show error toast when AI assistant fails
+  useEffect(() => {
+    if (error) {
+      toast.error(`AI Assistant Error: ${error}`);
+    }
+  }, [error]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim() && !isLoading) {
       sendMessage(prompt);
       setPrompt('');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as unknown as React.FormEvent);
     }
   };
 
@@ -94,6 +109,12 @@ const AIAssistant: React.FC = () => {
               {messages.map((message) => (
                 <MessageItem key={message.id} message={message} />
               ))}
+              {error && (
+                <div className="p-3 bg-destructive/10 text-destructive rounded-lg flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <p className="text-sm">Error: {error}</p>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
@@ -112,12 +133,7 @@ const AIAssistant: React.FC = () => {
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Type your message or prompt here..."
           className="min-h-[80px] resize-none pr-16"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit(e);
-            }
-          }}
+          onKeyDown={handleKeyDown}
           disabled={isLoading}
         />
         <Button

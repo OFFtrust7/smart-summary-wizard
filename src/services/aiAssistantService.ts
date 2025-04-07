@@ -21,9 +21,9 @@ interface AIAssistantResponse {
  */
 export async function generateAIResponse(prompt: string): Promise<AIAssistantResponse> {
   try {
-    // First check if we have a backend URL configured
-    if (!API_URL) {
-      console.warn("AI Assistant API URL is not configured. Using simulated response.");
+    // If API_URL is empty, use the mock response for development
+    if (!API_URL || API_URL.trim() === '') {
+      console.log("AI Assistant API URL is not configured. Using simulated response.");
       // Provide a simulated response for demonstration/development
       await new Promise(resolve => setTimeout(resolve, 1500));
       return {
@@ -84,7 +84,7 @@ export async function generateAIResponse(prompt: string): Promise<AIAssistantRes
  */
 export function configureAIAssistantService(backendUrl: string): void {
   if (!backendUrl) {
-    console.error("AI Assistant service configuration failed: No backend URL provided");
+    console.warn("AI Assistant service configuration failed: No backend URL provided");
     return;
   }
   
