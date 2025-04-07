@@ -5,10 +5,12 @@ import Layout from '@/components/Layout';
 import Header from '@/components/Header';
 import SummarizerForm from '@/components/SummarizerForm';
 import SummaryResult from '@/components/SummaryResult';
+import AIAssistant from '@/components/AIAssistant';
 
 const Index: React.FC = () => {
   const [summary, setSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   return (
     <Layout>
@@ -20,11 +22,22 @@ const Index: React.FC = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowAIAssistant(!showAIAssistant)}
+            className="text-sm flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+          >
+            {showAIAssistant ? 'Hide AI Assistant' : 'Show AI Assistant'}
+          </button>
+        </div>
+        
         <SummarizerForm onSummarize={setSummary} setIsLoading={setIsLoading} />
         
         <SummaryResult summary={summary} isLoading={isLoading} />
         
-        {!summary && !isLoading && (
+        {showAIAssistant && <AIAssistant />}
+        
+        {!summary && !isLoading && !showAIAssistant && (
           <motion.div 
             className="mt-16 text-center text-muted-foreground"
             initial={{ opacity: 0 }}

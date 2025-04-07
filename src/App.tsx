@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import { UsageLimitsProvider } from "./contexts/UsageLimitsContext";
 import { env } from "./config/env";
 import { configureYouTubeService } from "./services/youtubeService";
+import { configureAIAssistantService } from "./services/aiAssistantService";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -31,6 +32,10 @@ const App = () => {
     } else {
       console.log("YouTube summarizer disabled");
     }
+    
+    // Initialize the AI Assistant service with the backend API URL
+    configureAIAssistantService(env.BACKEND_API_URL);
+    console.log("AI Assistant service initialized");
     
     // Log company contact information for verification
     console.log(`Contact: ${env.COMPANY_EMAIL}`);

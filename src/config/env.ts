@@ -10,6 +10,7 @@ interface EnvConfig {
   
   // Feature flags
   ENABLE_YOUTUBE_SUMMARIZER: boolean;
+  ENABLE_AI_ASSISTANT: boolean;
 }
 
 // Default configuration for development
@@ -19,6 +20,7 @@ const defaultConfig: EnvConfig = {
   COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'SnapSummary',
   // Parse string 'true'/'false' to boolean - default to true if not specified
   ENABLE_YOUTUBE_SUMMARIZER: import.meta.env.VITE_ENABLE_YOUTUBE_SUMMARIZER !== 'false',
+  ENABLE_AI_ASSISTANT: import.meta.env.VITE_ENABLE_AI_ASSISTANT !== 'false',
 };
 
 // Export the environment configuration
