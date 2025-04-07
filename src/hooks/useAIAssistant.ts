@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { generateAIResponse } from '@/services/aiAssistantService';
+import { env } from '@/config/env';
 
 export interface Message {
   id: string;
@@ -38,32 +39,36 @@ export function useAIAssistant() {
       const response = await generateAIResponse(prompt);
       console.log("AI assistant response:", response);
 
+      // Always show a response message, even if there's an error
+      let responseContent: string;
+      
       if (response.success && response.text) {
-        // Add assistant response to the conversation
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: response.text,
-          timestamp: new Date()
-        };
-
-        setMessages(prev => [...prev, assistantMessage]);
+        responseContent = response.text;
       } else {
         const errorMessage = response.error || "Failed to generate response";
         setError(errorMessage);
         console.error("AI Assistant error:", errorMessage);
         
-        // Add assistant error message to the conversation
-        const errorResponseMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `Sorry, I encountered an error: ${errorMessage}. Please try again later.`,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, errorResponseMessage]);
-        toast.error(errorMessage);
+        // In dev mode or with no API URL, we'll already have a fallback response from the service
+        // In other error cases, show an error message in the chat
+        if (!env.isDevelopment() && env.BACKEND_API_URL) {
+          responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please try again later.`;
+          toast.error("AI Assistant error: " + errorMessage);
+        } else {
+          responseContent = response.text || `I'm sorry, but I encountered an issue. Please try again later.`;
+        }
       }
+      
+      // Add assistant response to the conversation
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: responseContent,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to communicate with AI assistant";
       console.error("AI Assistant catch error:", errorMessage);

@@ -33,13 +33,13 @@ const App = () => {
       console.log("YouTube summarizer disabled");
     }
     
-    // Initialize the AI Assistant service with the backend API URL
+    // Initialize the AI Assistant service
     if (env.ENABLE_AI_ASSISTANT) {
+      // Even if BACKEND_API_URL is empty, the service will fall back to mock responses
       configureAIAssistantService(env.BACKEND_API_URL);
-      console.log("AI Assistant service initialized");
+      console.log("AI Assistant service initialized" + (env.isDevelopment() ? " (using mock responses in dev mode)" : ""));
     } else {
       console.log("AI Assistant service disabled");
-      configureAIAssistantService(""); // Initialize with empty string to use mock responses
     }
     
     // Log company contact information for verification

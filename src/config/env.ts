@@ -38,3 +38,7 @@ export const isDevelopment = (): boolean => {
 export const isProduction = (): boolean => {
   return import.meta.env.PROD || import.meta.env.MODE === 'production';
 };
+
+// Add helper methods to the env object
+env.isDevelopment = isDevelopment;
+env.isProduction = isProduction;
