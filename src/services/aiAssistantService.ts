@@ -21,7 +21,13 @@ interface AIAssistantResponse {
  */
 export async function generateAIResponse(prompt: string): Promise<AIAssistantResponse> {
   try {
-    // If API_URL is empty, use the mock response for development
+    // Ensure API_URL is set either from environment or configuration
+    if (!API_URL && env.BACKEND_API_URL) {
+      console.log("Setting API_URL from environment:", env.BACKEND_API_URL);
+      API_URL = env.BACKEND_API_URL;
+    }
+
+    // If API_URL is still empty, use the mock response for development
     if (!API_URL || API_URL.trim() === '') {
       console.log("AI Assistant API URL is not configured. Using simulated response.");
       // Provide a simulated response for demonstration/development
@@ -34,47 +40,70 @@ export async function generateAIResponse(prompt: string): Promise<AIAssistantRes
 
     console.log(`Making AI Assistant API request to: ${API_URL}/generate-text`);
     
-    // Real API call
-    const response = await fetch(`${API_URL}/generate-text`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt }),
-    });
+    // Real API call with a timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+    
+    try {
+      const response = await fetch(`${API_URL}/generate-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+        signal: controller.signal
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorData;
-      
-      try {
-        errorData = JSON.parse(errorText);
-      } catch (e) {
-        errorData = { detail: errorText || 'Unknown error' };
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { detail: errorText || 'Unknown error' };
+        }
+        
+        console.error("AI Assistant API error:", errorData);
+        return {
+          success: false,
+          error: errorData.detail || `Server error: ${response.status}`
+        };
       }
-      
-      console.error("AI Assistant API error:", errorData);
-      return {
-        success: false,
-        error: errorData.detail || `Server error: ${response.status}`
-      };
-    }
 
-    const data = await response.json();
-    
-    // Log the response length to ensure we're getting the full text
-    console.log("Received AI response length:", data.text?.length || 0);
-    
-    return {
-      success: true,
-      text: data.text
-    };
+      const data = await response.json();
+      
+      // Log the response length to ensure we're getting the full text
+      console.log("Received AI response length:", data.text?.length || 0);
+      
+      return {
+        success: true,
+        text: data.text
+      };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
   } catch (error) {
     console.error("AI Assistant error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unable to connect to the AI assistant service"
-    };
+    if (error.name === 'AbortError') {
+      return {
+        success: false,
+        error: "Request timed out. The server took too long to respond."
+      };
+    } else if (error.message && error.message.includes('Failed to fetch')) {
+      return {
+        success: false,
+        error: "Failed to connect to the AI service. Please check your internet connection or the API endpoint configuration."
+      };
+    } else {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unable to connect to the AI assistant service"
+      };
+    }
   }
 }
 

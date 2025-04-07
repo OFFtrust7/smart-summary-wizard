@@ -52,12 +52,32 @@ export function useAIAssistant() {
         const errorMessage = response.error || "Failed to generate response";
         setError(errorMessage);
         console.error("AI Assistant error:", errorMessage);
+        
+        // Add assistant error message to the conversation
+        const errorResponseMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `Sorry, I encountered an error: ${errorMessage}. Please try again later.`,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, errorResponseMessage]);
         toast.error(errorMessage);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to communicate with AI assistant";
       console.error("AI Assistant catch error:", errorMessage);
       setError(errorMessage);
+      
+      // Add assistant error message to the conversation
+      const errorResponseMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${errorMessage}. Please try again later.`,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorResponseMessage]);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
