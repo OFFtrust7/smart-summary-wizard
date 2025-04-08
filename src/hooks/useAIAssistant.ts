@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { aiService } from '@/services/ai/aiService';
 import { env } from '@/config/env';
+import { generateAIResponse } from '@/services/aiAssistantService';
 
 export interface Message {
   id: string;
@@ -38,10 +39,7 @@ export function useAIAssistant() {
       console.log("Sending message to AI assistant:", prompt);
       
       // Use the AI service to generate a response
-      const response = await aiService.generateResponse(prompt, {
-        temperature: 0.7,  // Controls randomness: lower is more deterministic
-        maxLength: 2000    // Maximum length of the response
-      });
+      const response = await generateAIResponse(prompt);
       
       console.log("AI assistant response:", response);
 

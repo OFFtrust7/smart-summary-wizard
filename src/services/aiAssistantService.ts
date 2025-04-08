@@ -1,6 +1,7 @@
 
 import { aiService } from './ai/aiService';
 import { env } from '@/config/env';
+import { getOpenAIResponse } from './openaiService';
 
 /**
  * Service for interacting with the AI Assistant API
@@ -24,6 +25,21 @@ export async function generateAIResponse(prompt: string) {
   if (!env.ENABLE_AI_ASSISTANT) {
     console.log("AI Assistant service is disabled");
     return DISABLED_RESPONSE;
+  }
+
+  // If we have an OpenAI API key, we can directly use it
+  if (env.OPENAI_API_KEY) {
+    try {
+      console.log("Using direct OpenAI integration");
+      const text = await getOpenAIResponse(prompt);
+      return {
+        success: true,
+        text
+      };
+    } catch (error) {
+      console.error("OpenAI direct integration error:", error);
+      // Fall back to the AI service
+    }
   }
 
   return aiService.generateResponse(prompt);
