@@ -33,13 +33,30 @@ export async function generateAIResponse(prompt: string) {
  * Configure the AI Assistant service with environment variables
  * This should be called when the application starts
  */
-export function configureAIAssistantService(backendUrl: string): void {
+export function configureAIAssistantService(backendUrl: string, openaiApiKey?: string): void {
   if (!backendUrl) {
     console.warn("AI Assistant service configuration warning: No backend URL provided, using mock responses");
     return;
   }
   
   // Configure the AI service
-  aiService.configure(backendUrl);
+  aiService.configure(backendUrl, openaiApiKey);
   console.log(`AI Assistant service configured with backend URL: ${backendUrl}`);
+  
+  if (openaiApiKey) {
+    console.log("AI Assistant service configured with OpenAI integration");
+  }
+}
+
+/**
+ * Configure OpenAI for the AI Assistant service
+ * This can be called separately to set or update the OpenAI configuration
+ */
+export function configureOpenAI(apiKey: string, model?: string): void {
+  if (!apiKey) {
+    console.warn("OpenAI configuration failed: No API key provided");
+    return;
+  }
+  
+  aiService.configureOpenAI(apiKey, model);
 }

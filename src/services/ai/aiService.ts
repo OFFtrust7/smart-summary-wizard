@@ -1,6 +1,6 @@
-
 import { AIModelAdapter, AIModelOptions, AIModelResponse } from './interface';
 import { DefaultAIModel } from './defaultModel';
+import { OpenAIModel } from './openaiModel';
 import { AICache } from './cache';
 import { env } from '@/config/env';
 
@@ -13,6 +13,7 @@ export class AIService {
   private defaultAdapter: string;
   private cache: AICache;
   private apiUrl: string = '';
+  private openaiApiKey: string = '';
 
   private constructor() {
     this.adapters = new Map();
@@ -33,13 +34,36 @@ export class AIService {
   /**
    * Configure the AI service with environment settings
    */
-  public configure(apiUrl: string): void {
+  public configure(apiUrl: string, openaiApiKey?: string): void {
     this.apiUrl = apiUrl;
     
     // Update the default adapter with the new API URL
     this.registerAdapter('default', new DefaultAIModel(apiUrl));
     
+    // Configure OpenAI if API key is provided
+    if (openaiApiKey) {
+      this.openaiApiKey = openaiApiKey;
+      this.registerAdapter('openai', new OpenAIModel(openaiApiKey));
+      this.setDefaultAdapter('openai'); // Use OpenAI as default if configured
+      console.log('OpenAI adapter configured and set as default');
+    }
+    
     console.log(`AI Service configured with API URL: ${apiUrl}`);
+  }
+
+  /**
+   * Configure OpenAI adapter separately
+   */
+  public configureOpenAI(apiKey: string, model?: string): void {
+    if (!apiKey) {
+      console.warn("OpenAI configuration failed: No API key provided");
+      return;
+    }
+    
+    this.openaiApiKey = apiKey;
+    this.registerAdapter('openai', new OpenAIModel(apiKey, model));
+    this.setDefaultAdapter('openai');
+    console.log(`OpenAI adapter configured with model: ${model || 'gpt-4o-mini'}`);
   }
 
   /**
@@ -90,7 +114,7 @@ export class AIService {
       const response = await adapter.generateResponse(prompt, options);
       
       // Cache successful responses
-      if (useCaching && response.success && response.text) {
+      if (options.stream !== true && response.success && response.text) {
         const cacheKey = this.createCacheKey(prompt, options, adapterName);
         this.cache.set(cacheKey, response);
       }

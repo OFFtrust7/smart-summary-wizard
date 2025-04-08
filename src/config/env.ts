@@ -1,4 +1,3 @@
-
 // Environment configuration
 interface EnvConfig {
   // Backend API URL
@@ -11,6 +10,10 @@ interface EnvConfig {
   // Feature flags
   ENABLE_YOUTUBE_SUMMARIZER: boolean;
   ENABLE_AI_ASSISTANT: boolean;
+  
+  // OpenAI configuration
+  OPENAI_API_KEY?: string;
+  OPENAI_MODEL?: string;
 
   // Helper methods
   isDevelopment?: () => boolean;
@@ -25,6 +28,9 @@ const defaultConfig: EnvConfig = {
   // Parse string 'true'/'false' to boolean - default to true if not specified
   ENABLE_YOUTUBE_SUMMARIZER: import.meta.env.VITE_ENABLE_YOUTUBE_SUMMARIZER !== 'false',
   ENABLE_AI_ASSISTANT: import.meta.env.VITE_ENABLE_AI_ASSISTANT !== 'false',
+  // OpenAI configuration
+  OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
+  OPENAI_MODEL: import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini',
 };
 
 // Helper to check if we're in a development environment

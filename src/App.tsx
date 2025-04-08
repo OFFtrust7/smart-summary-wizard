@@ -37,9 +37,15 @@ const App = () => {
     // Initialize the AI Assistant service
     if (env.ENABLE_AI_ASSISTANT) {
       // Configure both the legacy service and the new AI service
-      configureAIAssistantService(env.BACKEND_API_URL);
-      aiService.configure(env.BACKEND_API_URL);
+      configureAIAssistantService(env.BACKEND_API_URL, env.OPENAI_API_KEY);
       console.log("AI Assistant service initialized" + (env.isDevelopment() ? " (using mock responses in dev mode)" : ""));
+      
+      // Log OpenAI configuration status
+      if (env.OPENAI_API_KEY) {
+        console.log(`OpenAI integration enabled with model: ${env.OPENAI_MODEL}`);
+      } else {
+        console.log("OpenAI integration not configured (missing API key)");
+      }
     } else {
       console.log("AI Assistant service disabled");
     }
