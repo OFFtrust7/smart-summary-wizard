@@ -16,7 +16,6 @@ import { UsageLimitsProvider } from "./contexts/UsageLimitsContext";
 import { env } from "./config/env";
 import { configureYouTubeService } from "./services/youtubeService";
 import { configureAIAssistantService } from "./services/aiAssistantService";
-import { aiService } from "./services/ai/aiService";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -36,9 +35,8 @@ const App = () => {
     
     // Initialize the AI Assistant service
     if (env.ENABLE_AI_ASSISTANT) {
-      // Configure both the legacy service and the new AI service
+      // Configure the AI service with both backend URL and OpenAI API key (if available)
       configureAIAssistantService(env.BACKEND_API_URL, env.OPENAI_API_KEY);
-      console.log("AI Assistant service initialized" + (env.isDevelopment() ? " (using mock responses in dev mode)" : ""));
       
       // Log OpenAI configuration status
       if (env.OPENAI_API_KEY) {
@@ -46,6 +44,8 @@ const App = () => {
       } else {
         console.log("OpenAI integration not configured (missing API key)");
       }
+      
+      console.log("AI Assistant service initialized" + (env.isDevelopment() && !env.OPENAI_API_KEY ? " (using mock responses in dev mode)" : ""));
     } else {
       console.log("AI Assistant service disabled");
     }

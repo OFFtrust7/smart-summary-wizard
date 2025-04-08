@@ -55,9 +55,11 @@ export function useAIAssistant() {
         setError(errorMessage);
         console.error("AI Assistant error:", errorMessage);
         
-        // In dev mode or with no API URL, we'll already have a fallback response from the service
-        // In other error cases, show an error message in the chat
-        if (!env.isDevelopment() && env.BACKEND_API_URL) {
+        // Check if we have OpenAI configured
+        if (env.OPENAI_API_KEY) {
+          responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please verify your OpenAI API key is valid and has sufficient credits.`;
+          toast.error("OpenAI API error: " + errorMessage);
+        } else if (!env.isDevelopment() && env.BACKEND_API_URL) {
           responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please try again later.`;
           toast.error("AI Assistant error: " + errorMessage);
         } else {

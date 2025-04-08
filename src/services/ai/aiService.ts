@@ -1,3 +1,4 @@
+
 import { AIModelAdapter, AIModelOptions, AIModelResponse } from './interface';
 import { DefaultAIModel } from './defaultModel';
 import { OpenAIModel } from './openaiModel';
@@ -43,7 +44,7 @@ export class AIService {
     // Configure OpenAI if API key is provided
     if (openaiApiKey) {
       this.openaiApiKey = openaiApiKey;
-      this.registerAdapter('openai', new OpenAIModel(openaiApiKey));
+      this.registerAdapter('openai', new OpenAIModel(openaiApiKey, env.OPENAI_MODEL));
       this.setDefaultAdapter('openai'); // Use OpenAI as default if configured
       console.log('OpenAI adapter configured and set as default');
     }
@@ -61,9 +62,9 @@ export class AIService {
     }
     
     this.openaiApiKey = apiKey;
-    this.registerAdapter('openai', new OpenAIModel(apiKey, model));
+    this.registerAdapter('openai', new OpenAIModel(apiKey, model || env.OPENAI_MODEL));
     this.setDefaultAdapter('openai');
-    console.log(`OpenAI adapter configured with model: ${model || 'gpt-4o-mini'}`);
+    console.log(`OpenAI adapter configured with model: ${model || env.OPENAI_MODEL || 'gpt-4o-mini'}`);
   }
 
   /**
@@ -92,7 +93,7 @@ export class AIService {
     options: AIModelOptions = {},
     adapterName?: string
   ): Promise<AIModelResponse> {
-    const useCaching = options.stream !== true; // Don't cache streaming responses
+    const useCaching = options.stream !== true && env.OPENAI_API_KEY; // Don't cache streaming responses
     
     if (useCaching) {
       // Create a cache key from the prompt and options
@@ -114,7 +115,7 @@ export class AIService {
       const response = await adapter.generateResponse(prompt, options);
       
       // Cache successful responses
-      if (options.stream !== true && response.success && response.text) {
+      if (useCaching && response.success && response.text) {
         const cacheKey = this.createCacheKey(prompt, options, adapterName);
         this.cache.set(cacheKey, response);
       }
