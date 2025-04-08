@@ -16,6 +16,7 @@ import { UsageLimitsProvider } from "./contexts/UsageLimitsContext";
 import { env } from "./config/env";
 import { configureYouTubeService } from "./services/youtubeService";
 import { configureAIAssistantService } from "./services/aiAssistantService";
+import { aiService } from "./services/ai/aiService";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -35,8 +36,9 @@ const App = () => {
     
     // Initialize the AI Assistant service
     if (env.ENABLE_AI_ASSISTANT) {
-      // Even if BACKEND_API_URL is empty, the service will fall back to mock responses
+      // Configure both the legacy service and the new AI service
       configureAIAssistantService(env.BACKEND_API_URL);
+      aiService.configure(env.BACKEND_API_URL);
       console.log("AI Assistant service initialized" + (env.isDevelopment() ? " (using mock responses in dev mode)" : ""));
     } else {
       console.log("AI Assistant service disabled");

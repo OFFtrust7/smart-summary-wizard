@@ -1,7 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { generateAIResponse } from '@/services/aiAssistantService';
+import { aiService } from '@/services/ai/aiService';
 import { env } from '@/config/env';
 
 export interface Message {
@@ -16,7 +16,7 @@ export function useAIAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const sendMessage = async (prompt: string) => {
+  const sendMessage = useCallback(async (prompt: string) => {
     if (!prompt.trim()) {
       toast.error("Please enter a message");
       return;
@@ -36,7 +36,13 @@ export function useAIAssistant() {
 
     try {
       console.log("Sending message to AI assistant:", prompt);
-      const response = await generateAIResponse(prompt);
+      
+      // Use the AI service to generate a response
+      const response = await aiService.generateResponse(prompt, {
+        temperature: 0.7,  // Controls randomness: lower is more deterministic
+        maxLength: 2000    // Maximum length of the response
+      });
+      
       console.log("AI assistant response:", response);
 
       // Always show a response message, even if there's an error
@@ -87,12 +93,12 @@ export function useAIAssistant() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const clearConversation = () => {
+  const clearConversation = useCallback(() => {
     setMessages([]);
     setError(null);
-  };
+  }, []);
 
   return {
     messages,
