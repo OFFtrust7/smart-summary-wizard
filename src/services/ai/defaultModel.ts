@@ -15,9 +15,9 @@ export class DefaultAIModel implements AIModelAdapter {
 
   async generateResponse(prompt: string, options: AIModelOptions = {}): Promise<AIModelResponse> {
     try {
-      // If API URL is missing, use mock response
-      if (!this.apiUrl || this.apiUrl.trim() === '' || env.isDevelopment()) {
-        console.log("Using simulated AI response due to missing API URL or development environment");
+      // If API URL is missing, use mock response only if OpenAI is not configured
+      if ((!this.apiUrl || this.apiUrl.trim() === '') && !env.OPENAI_API_KEY) {
+        console.log("Using simulated AI response due to missing API URL and no OpenAI key");
         await new Promise(resolve => setTimeout(resolve, 800));
         return {
           success: true,
@@ -83,12 +83,9 @@ export class DefaultAIModel implements AIModelAdapter {
           error: "Request timed out. The server took too long to respond."
         };
       } else {
-        // Default to mock response in case of connection errors
-        console.log("Connection error detected, falling back to mock response");
-        await new Promise(resolve => setTimeout(resolve, 800));
         return {
-          success: true,
-          text: `I couldn't connect to the AI service, so I'm providing a fallback response. You asked: "${prompt}"\n\nThis is a simulated response since the backend API is currently unavailable.`
+          success: false,
+          error: error instanceof Error ? error.message : "An unknown error occurred."
         };
       }
     }

@@ -10,6 +10,8 @@ export async function getOpenAIResponse(prompt: string) {
   }
 
   try {
+    console.log(`Making OpenAI API request with model: ${env.OPENAI_MODEL || "gpt-3.5-turbo"}`);
+    
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -31,6 +33,7 @@ export async function getOpenAIResponse(prompt: string) {
     if (response.ok) {
       return data.choices[0].message.content;
     } else {
+      console.error("OpenAI API error:", data.error);
       throw new Error(data.error?.message || "Failed to fetch AI response.");
     }
   } catch (error) {

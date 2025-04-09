@@ -27,10 +27,10 @@ export async function generateAIResponse(prompt: string) {
     return DISABLED_RESPONSE;
   }
 
-  // If we have an OpenAI API key, we can directly use it
+  // If we have an OpenAI API key, we can directly use it (prioritize this)
   if (env.OPENAI_API_KEY) {
     try {
-      console.log("Using direct OpenAI integration");
+      console.log("Using direct OpenAI integration with API key");
       const text = await getOpenAIResponse(prompt);
       return {
         success: true,
@@ -38,10 +38,16 @@ export async function generateAIResponse(prompt: string) {
       };
     } catch (error) {
       console.error("OpenAI direct integration error:", error);
-      // Fall back to the AI service
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error with OpenAI API",
+        text: `Error with OpenAI API: ${error instanceof Error ? error.message : "Unknown error"}`
+      };
     }
   }
 
+  // Fall back to the AI service if no OpenAI key
+  console.log("No OpenAI API key, falling back to backend API");
   return aiService.generateResponse(prompt);
 }
 

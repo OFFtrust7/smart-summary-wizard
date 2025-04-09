@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { aiService } from '@/services/ai/aiService';
@@ -50,7 +49,7 @@ export function useAIAssistant() {
         responseContent = response.text;
       } else {
         // Properly access error using type checking
-        const errorMessage = 'error' in response ? response.error : "Failed to generate response";
+        const errorMessage = typeof response.error === 'string' ? response.error : "Failed to generate response";
         setError(errorMessage);
         console.error("AI Assistant error:", errorMessage);
         
@@ -58,11 +57,9 @@ export function useAIAssistant() {
         if (env.OPENAI_API_KEY) {
           responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please verify your OpenAI API key is valid and has sufficient credits.`;
           toast.error("OpenAI API error: " + errorMessage);
-        } else if (!env.isDevelopment() && env.BACKEND_API_URL) {
+        } else {
           responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please try again later.`;
           toast.error("AI Assistant error: " + errorMessage);
-        } else {
-          responseContent = response.text || `I'm sorry, but I encountered an issue. Please try again later.`;
         }
       }
       
