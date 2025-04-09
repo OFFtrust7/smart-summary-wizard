@@ -1,7 +1,7 @@
 
 import { aiService } from './ai/aiService';
 import { env } from '@/config/env';
-import { getOpenAIResponse } from './openaiService';
+import { AIModelResponse } from './ai/interface';
 
 /**
  * Service for interacting with the AI Assistant API
@@ -9,46 +9,57 @@ import { getOpenAIResponse } from './openaiService';
  */
 
 // Default response when service is disabled
-const DISABLED_RESPONSE = {
+const DISABLED_RESPONSE: AIModelResponse = {
   success: false,
   error: "AI Assistant service is disabled",
   text: "I'm sorry, but the AI Assistant service is currently disabled. Please check your environment settings."
 };
 
 /**
- * Generate text using the AI Assistant API
+ * Generate text using the AI Assistant API via backend
  * @param prompt The user's prompt for the AI assistant
  * @returns A promise resolving to the AI response
  */
-export async function generateAIResponse(prompt: string) {
+export async function generateAIResponse(prompt: string): Promise<AIModelResponse> {
   // Check if service is enabled
   if (!env.ENABLE_AI_ASSISTANT) {
     console.log("AI Assistant service is disabled");
     return DISABLED_RESPONSE;
   }
 
-  // If we have an OpenAI API key, we can directly use it (prioritize this)
-  if (env.OPENAI_API_KEY) {
-    try {
-      console.log("Using direct OpenAI integration with API key");
-      const text = await getOpenAIResponse(prompt);
-      return {
-        success: true,
-        text
-      };
-    } catch (error) {
-      console.error("OpenAI direct integration error:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error with OpenAI API",
-        text: `Error with OpenAI API: ${error instanceof Error ? error.message : "Unknown error"}`
+  try {
+    console.log("Using backend API for AI assistant");
+    const response = await fetch("http://localhost:3001/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return { 
+        success: false, 
+        error: errorData.error || 'Unknown error',
+        text: `Error: ${errorData.error || 'Unknown error'}`
       };
     }
-  }
 
-  // Fall back to the AI service if no OpenAI key
-  console.log("No OpenAI API key, falling back to backend API");
-  return aiService.generateResponse(prompt);
+    const data = await response.json();
+    return { 
+      success: true, 
+      text: data.text 
+    };
+  } catch (error) {
+    console.error("Error calling backend:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { 
+      success: false, 
+      error: errorMessage,
+      text: `Error connecting to backend server: ${errorMessage}. Please make sure your backend is running.`
+    };
+  }
 }
 
 /**

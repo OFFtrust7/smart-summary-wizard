@@ -40,7 +40,7 @@ export function useAIAssistant() {
       console.log("Sending message to AI assistant:", prompt);
       
       // Use the AI service to generate a response
-      const response = await generateAIResponse(prompt);
+      const response: AIModelResponse = await generateAIResponse(prompt);
       
       console.log("AI assistant response:", response);
 
@@ -50,7 +50,7 @@ export function useAIAssistant() {
       if (response.success && response.text) {
         responseContent = response.text;
       } else {
-        // Safely access error property with type checking
+        // Safely access error property
         let errorMessage = "Failed to generate response";
         
         if (!response.success && response.error !== undefined) {
@@ -60,12 +60,12 @@ export function useAIAssistant() {
         setError(errorMessage);
         console.error("AI Assistant error:", errorMessage);
         
-        // Check if we have OpenAI configured
+        // Create user-friendly error message
         if (env.OPENAI_API_KEY) {
           responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please verify your OpenAI API key is valid and has sufficient credits.`;
           toast.error("OpenAI API error: " + errorMessage);
         } else {
-          responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please try again later.`;
+          responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please make sure your backend server is running at http://localhost:3001.`;
           toast.error("AI Assistant error: " + errorMessage);
         }
       }
@@ -89,7 +89,7 @@ export function useAIAssistant() {
       const errorResponseMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Sorry, I encountered an error: ${errorMessage}. Please try again later.`,
+        content: `Sorry, I encountered an error: ${errorMessage}. Please check if your backend server is running at http://localhost:3001.`,
         timestamp: new Date()
       };
       
