@@ -53,7 +53,7 @@ export function useAIAssistant() {
         // Safely access error property with type checking
         let errorMessage = "Failed to generate response";
         
-        if (!response.success && typeof response.error === 'string') {
+        if (!response.success && response.error) {
           errorMessage = response.error;
         }
         
