@@ -17,7 +17,7 @@ export async function getOpenAIResponse(prompt: string) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: env.OPENAI_MODEL || "gpt-4o-mini",
+        model: env.OPENAI_MODEL || "gpt-3.5-turbo",
         messages: [
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: prompt }
