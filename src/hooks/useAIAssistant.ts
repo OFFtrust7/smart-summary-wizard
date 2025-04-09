@@ -1,8 +1,10 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { aiService } from '@/services/ai/aiService';
 import { env } from '@/config/env';
 import { generateAIResponse } from '@/services/aiAssistantService';
+import { AIModelResponse } from '@/services/ai/interface';
 
 export interface Message {
   id: string;
@@ -48,8 +50,13 @@ export function useAIAssistant() {
       if (response.success && response.text) {
         responseContent = response.text;
       } else {
-        // Properly access error using type checking
-        const errorMessage = typeof response.error === 'string' ? response.error : "Failed to generate response";
+        // Safely access error property with type checking
+        let errorMessage = "Failed to generate response";
+        
+        if (!response.success && typeof response.error === 'string') {
+          errorMessage = response.error;
+        }
+        
         setError(errorMessage);
         console.error("AI Assistant error:", errorMessage);
         

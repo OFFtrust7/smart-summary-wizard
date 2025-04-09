@@ -10,7 +10,7 @@ export async function getOpenAIResponse(prompt: string) {
   }
 
   try {
-    console.log(`Making OpenAI API request with model: ${env.OPENAI_MODEL || "gpt-3.5-turbo"}`);
+    console.log(`Making OpenAI API request with model: ${env.OPENAI_MODEL || "gpt-4o-mini"}`);
     
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -19,7 +19,7 @@ export async function getOpenAIResponse(prompt: string) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: env.OPENAI_MODEL || "gpt-3.5-turbo",
+        model: env.OPENAI_MODEL || "gpt-4o-mini",
         messages: [
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: prompt }
