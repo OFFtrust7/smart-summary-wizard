@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# Welcome to my  SnapSummary  projects
 
 ## Project info
 
@@ -7,12 +7,6 @@
 ## How can I edit this code?
 
 There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/9fd18330-b2f9-4bd7-98f2-26d210090c8a) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
