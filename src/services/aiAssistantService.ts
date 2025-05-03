@@ -34,15 +34,17 @@ export async function generateAIResponse(prompt: string): Promise<AIModelRespons
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt }),
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(15000) // 15 second timeout
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({ error: `Server responded with status ${response.status}` }));
       return { 
         success: false, 
-        error: errorData.error || 'Unknown error',
-        text: `Error: ${errorData.error || 'Unknown error'}`
+        error: errorData.error || `Server error: ${response.status}`,
+        text: `Error: ${errorData.error || 'Server error'}`
       };
     }
 
@@ -54,6 +56,16 @@ export async function generateAIResponse(prompt: string): Promise<AIModelRespons
   } catch (error) {
     console.error("Error calling backend:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    // Special handling for common connection errors
+    if (errorMessage.includes("Failed to fetch")) {
+      return { 
+        success: false, 
+        error: "Failed to connect to the backend server",
+        text: `Cannot connect to the backend server. Please make sure your backend is running at http://localhost:3001 and try again.`
+      };
+    }
+    
     return { 
       success: false, 
       error: errorMessage,
