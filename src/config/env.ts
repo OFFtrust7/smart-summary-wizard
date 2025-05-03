@@ -1,3 +1,4 @@
+
 // Environment configuration
 interface EnvConfig {
   // Backend API URL
@@ -22,7 +23,7 @@ interface EnvConfig {
 
 // Default configuration for development
 const defaultConfig: EnvConfig = {
-  BACKEND_API_URL: import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000',
+  BACKEND_API_URL: import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001',
   COMPANY_EMAIL: import.meta.env.VITE_COMPANY_EMAIL || 'contact@snapsummary.com',
   COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'SnapSummary',
   // Parse string 'true'/'false' to boolean - default to true if not specified
@@ -30,7 +31,7 @@ const defaultConfig: EnvConfig = {
   ENABLE_AI_ASSISTANT: import.meta.env.VITE_ENABLE_AI_ASSISTANT !== 'false',
   // OpenAI configuration
   OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
-  OPENAI_MODEL: import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini',
+  OPENAI_MODEL: import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o',
 };
 
 // Helper to check if we're in a development environment

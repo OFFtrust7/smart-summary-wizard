@@ -19,7 +19,7 @@ const DISABLED_RESPONSE: AIModelResponse = {
 // Fallback response when backend is unavailable
 const OFFLINE_FALLBACK_RESPONSE: AIModelResponse = {
   success: true,
-  text: "I'm running in offline mode because your backend server isn't available. Please start your backend server at http://localhost:3001 or use OpenAI API directly by setting your OPENAI_API_KEY in the environment variables."
+  text: "I'm running in offline mode because your backend server isn't available. Please start your backend server or use OpenAI API directly by setting your OPENAI_API_KEY in the environment variables."
 };
 
 /**
@@ -51,8 +51,11 @@ export async function generateAIResponse(prompt: string): Promise<AIModelRespons
   }
 
   try {
-    console.log("Using backend API for AI assistant");
-    const response = await fetch("http://localhost:3001/api/chat", {
+    const backendUrl = env.BACKEND_API_URL;
+    const chatEndpoint = `${backendUrl}/api/chat`;
+    console.log(`Using backend API for AI assistant at: ${chatEndpoint}`);
+    
+    const response = await fetch(chatEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -91,7 +94,7 @@ export async function generateAIResponse(prompt: string): Promise<AIModelRespons
       return { 
         success: false, 
         error: "Failed to connect to the backend server",
-        text: `Cannot connect to the backend server. Please make sure your backend is running at http://localhost:3001 and try again.`
+        text: `Cannot connect to the backend server at ${env.BACKEND_API_URL}. Please make sure your backend is running and try again.`
       };
     }
     
