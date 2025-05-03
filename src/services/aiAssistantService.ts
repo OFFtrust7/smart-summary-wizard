@@ -2,6 +2,7 @@
 import { aiService } from './ai/aiService';
 import { env } from '@/config/env';
 import { AIModelResponse } from './ai/interface';
+import { getOpenAIResponse } from './openaiService';
 
 /**
  * Service for interacting with the AI Assistant API
@@ -15,6 +16,12 @@ const DISABLED_RESPONSE: AIModelResponse = {
   text: "I'm sorry, but the AI Assistant service is currently disabled. Please check your environment settings."
 };
 
+// Fallback response when backend is unavailable
+const OFFLINE_FALLBACK_RESPONSE: AIModelResponse = {
+  success: true,
+  text: "I'm running in offline mode because your backend server isn't available. Please start your backend server at http://localhost:3001 or use OpenAI API directly by setting your OPENAI_API_KEY in the environment variables."
+};
+
 /**
  * Generate text using the AI Assistant API via backend
  * @param prompt The user's prompt for the AI assistant
@@ -25,6 +32,22 @@ export async function generateAIResponse(prompt: string): Promise<AIModelRespons
   if (!env.ENABLE_AI_ASSISTANT) {
     console.log("AI Assistant service is disabled");
     return DISABLED_RESPONSE;
+  }
+
+  // Try to use direct OpenAI integration if API key is available
+  if (env.OPENAI_API_KEY) {
+    try {
+      console.log("Using direct OpenAI integration");
+      const text = await getOpenAIResponse(prompt);
+      return { 
+        success: true, 
+        text 
+      };
+    } catch (error) {
+      console.error("OpenAI direct integration error:", error);
+      // If direct OpenAI fails, fall back to backend
+      console.log("Falling back to backend API");
+    }
   }
 
   try {
@@ -59,6 +82,12 @@ export async function generateAIResponse(prompt: string): Promise<AIModelRespons
     
     // Special handling for common connection errors
     if (errorMessage.includes("Failed to fetch")) {
+      // In development mode with no backend, return a helpful offline response
+      if (env.isDevelopment() && !env.OPENAI_API_KEY) {
+        console.log("Backend unavailable, returning offline fallback response");
+        return OFFLINE_FALLBACK_RESPONSE;
+      }
+      
       return { 
         success: false, 
         error: "Failed to connect to the backend server",

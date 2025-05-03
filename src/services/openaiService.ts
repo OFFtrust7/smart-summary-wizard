@@ -25,7 +25,9 @@ export async function getOpenAIResponse(prompt: string) {
           { role: "user", content: prompt }
         ],
         temperature: 0.7
-      })
+      }),
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(20000) // 20 second timeout
     });
 
     const data = await response.json();

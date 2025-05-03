@@ -58,11 +58,20 @@ export function useAIAssistant() {
         
         // Create user-friendly error message
         if (errorMessage.includes("Failed to connect")) {
+          // Special case for connection errors
           responseContent = `I'm sorry, but I couldn't connect to the backend server. Please make sure your backend server is running at http://localhost:3001.`;
+          
+          if (env.OPENAI_API_KEY) {
+            // If we have an OpenAI key but still getting connection error
+            responseContent += " You have an OpenAI API key configured, but there was an issue connecting to the OpenAI API.";
+          } else {
+            responseContent += " If you don't have a backend server, you can set VITE_OPENAI_API_KEY in your .env file to use the OpenAI API directly.";
+          }
+          
           toast.error("Backend connection error: Cannot reach the AI service");
-        } else if (env.OPENAI_API_KEY) {
-          responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please verify your OpenAI API key is valid and has sufficient credits.`;
-          toast.error("OpenAI API error: " + errorMessage);
+        } else if (env.OPENAI_API_KEY && errorMessage.includes("api key")) {
+          responseContent = `I'm sorry, but there seems to be an issue with your OpenAI API key. Please verify that it's valid and has sufficient credits.`;
+          toast.error("OpenAI API key error: " + errorMessage);
         } else {
           responseContent = `I'm sorry, but I encountered an issue: ${errorMessage}. Please make sure your backend server is running correctly.`;
           toast.error("AI Assistant error: " + errorMessage);
