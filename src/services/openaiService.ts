@@ -1,6 +1,16 @@
 
 import { env } from '@/config/env';
 
+// List of valid OpenAI models
+const VALID_MODELS = [
+  'gpt-4o',
+  'gpt-4o-mini',
+  'gpt-4-turbo',
+  'gpt-4-vision-preview',
+  'gpt-3.5-turbo',
+  'gpt-4.5-preview'
+];
+
 /**
  * OpenAI Service for direct API calls
  */
@@ -10,7 +20,15 @@ export async function getOpenAIResponse(prompt: string) {
   }
 
   try {
-    const model = env.OPENAI_MODEL || "gpt-4o";
+    // Get the model from environment or use default
+    let model = env.OPENAI_MODEL || "gpt-4o";
+    
+    // Validate the model
+    if (!VALID_MODELS.includes(model)) {
+      console.warn(`Warning: Model ${model} might not be valid. Using gpt-4o as fallback.`);
+      model = "gpt-4o";
+    }
+    
     console.log(`Making OpenAI API request with model: ${model}`);
     
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
