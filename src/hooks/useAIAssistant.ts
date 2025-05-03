@@ -51,11 +51,7 @@ export function useAIAssistant() {
         responseContent = response.text;
       } else {
         // Safely access error property
-        let errorMessage = "Failed to generate response";
-        
-        if (!response.success && response.error !== undefined) {
-          errorMessage = response.error;
-        }
+        const errorMessage = response.error || "Failed to generate response";
         
         setError(errorMessage);
         console.error("AI Assistant error:", errorMessage);
