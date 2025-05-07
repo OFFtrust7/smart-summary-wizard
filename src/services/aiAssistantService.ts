@@ -3,6 +3,7 @@ import { aiService } from './ai/aiService';
 import { env } from '@/config/env';
 import { AIModelResponse } from './ai/interface';
 import { getOpenAIResponse } from './openaiService';
+import { toast } from 'sonner';
 
 /**
  * Service for interacting with the AI Assistant API
@@ -19,7 +20,7 @@ const DISABLED_RESPONSE: AIModelResponse = {
 // Fallback response when backend is unavailable
 const OFFLINE_FALLBACK_RESPONSE: AIModelResponse = {
   success: true,
-  text: "I'm running in offline mode because your backend server isn't available. Please start your backend server or use OpenAI API directly by setting your OPENAI_API_KEY in the environment variables."
+  text: "I'm running in offline mode because your backend server isn't available. Please start your backend server (see BACKEND_README.md) or use OpenAI API directly by setting your OPENAI_API_KEY in the environment variables."
 };
 
 /**
@@ -84,24 +85,25 @@ export async function generateAIResponse(prompt: string): Promise<AIModelRespons
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     
     // Special handling for common connection errors
-    if (errorMessage.includes("Failed to fetch")) {
+    if (errorMessage.includes("Failed to fetch") || errorMessage.includes("NetworkError")) {
       // In development mode with no backend, return a helpful offline response
       if (env.isDevelopment() && !env.OPENAI_API_KEY) {
         console.log("Backend unavailable, returning offline fallback response");
+        toast.error("Backend server not found. See BACKEND_README.md for setup instructions.");
         return OFFLINE_FALLBACK_RESPONSE;
       }
       
       return { 
         success: false, 
         error: "Failed to connect to the backend server",
-        text: `Cannot connect to the backend server at ${env.BACKEND_API_URL}. Please make sure your backend is running and try again.`
+        text: `Cannot connect to the backend server at ${env.BACKEND_API_URL}. Please make sure your backend is running (see BACKEND_README.md) and try again.`
       };
     }
     
     return { 
       success: false, 
       error: errorMessage,
-      text: `Error connecting to backend server: ${errorMessage}. Please make sure your backend is running.`
+      text: `Error connecting to backend server: ${errorMessage}. Please see BACKEND_README.md for setup instructions.`
     };
   }
 }
@@ -121,10 +123,12 @@ export function configureAIAssistantService(backendUrl: string, openaiApiKey?: s
   
   if (backendUrl) {
     console.log(`AI Assistant service configured with backend URL: ${backendUrl}`);
+    toast.success("AI Assistant connected to backend");
   }
   
   if (openaiApiKey) {
     console.log("AI Assistant service configured with OpenAI integration");
+    toast.success("AI Assistant configured with OpenAI integration");
   }
 }
 
