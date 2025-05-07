@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useSummarizerForm } from '@/hooks/useSummarizerForm';
 import SummaryInputField from '@/components/summarizer/SummaryInputField';
 import SummaryLengthSelector from '@/components/summarizer/SummaryLengthSelector';
 import UsageLimitIndicator from '@/components/summarizer/UsageLimitIndicator';
+import FileAttachment from '@/components/summarizer/FileAttachment';
 
 interface SummarizerFormProps {
   onSummarize: (summary: string) => void;
@@ -22,6 +23,8 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
   placeholder,
   disabled = false
 }) => {
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  
   const {
     text,
     setText,
@@ -34,11 +37,16 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
   } = useSummarizerForm({
     onSummarize,
     setIsLoading,
-    inputType
+    inputType,
+    attachedFiles
   });
 
   // Don't allow submissions if disabled or limit reached
   const isFormDisabled = disabled || limitReached;
+
+  const handleFileSelect = (files: File[]) => {
+    setAttachedFiles(files);
+  };
 
   return (
     <motion.form 
@@ -75,6 +83,13 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
           placeholder={placeholder || getDefaultPlaceholder()}
           disabled={isFormDisabled}
         />
+        
+        <div className="mt-4">
+          <FileAttachment
+            onFileSelect={handleFileSelect}
+            disabled={isFormDisabled}
+          />
+        </div>
       </motion.div>
       
       <div className="flex flex-col sm:flex-row gap-4 mt-6">

@@ -11,12 +11,14 @@ interface UseSummarizerFormProps {
   onSummarize: (summary: string) => void;
   setIsLoading: (loading: boolean) => void;
   inputType: InputType;
+  attachedFiles?: File[];
 }
 
 export function useSummarizerForm({ 
   onSummarize, 
   setIsLoading, 
-  inputType 
+  inputType,
+  attachedFiles = []
 }: UseSummarizerFormProps) {
   const [text, setText] = useState('');
   const [summaryLength, setSummaryLength] = useState<SummaryLength>('balanced');
@@ -36,8 +38,8 @@ export function useSummarizerForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!text.trim()) {
-      toast.error(`Please enter ${inputType === 'text' ? 'some text' : 'a valid URL'} to summarize`);
+    if (!text.trim() && attachedFiles.length === 0) {
+      toast.error(`Please enter ${inputType === 'text' ? 'some text' : 'a valid URL'} or attach a file to summarize`);
       return;
     }
 
@@ -50,6 +52,20 @@ export function useSummarizerForm({
     setIsLoading(true);
     
     try {
+      // Handle attachments if present
+      if (attachedFiles.length > 0) {
+        // For now, we'll just process the first file
+        const file = attachedFiles[0];
+        
+        if (file.type.startsWith('image/')) {
+          toast.info('Processing attached image...');
+          // Image processing logic would go here
+        } else if (file.type === 'application/pdf') {
+          toast.info('Processing PDF document...');
+          // PDF processing logic would go here
+        }
+      }
+      
       // If this is URL or YouTube, we pass directly to the parent handler
       if (inputType === 'url' || inputType === 'youtube') {
         onSummarize(text);
