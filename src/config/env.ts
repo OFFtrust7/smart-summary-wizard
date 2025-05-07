@@ -30,8 +30,8 @@ const defaultConfig: EnvConfig = {
   ENABLE_YOUTUBE_SUMMARIZER: import.meta.env.VITE_ENABLE_YOUTUBE_SUMMARIZER !== 'false',
   ENABLE_AI_ASSISTANT: import.meta.env.VITE_ENABLE_AI_ASSISTANT !== 'false',
   // OpenAI configuration
-  OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
-  OPENAI_MODEL: import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o',
+  OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY || "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",
+  OPENAI_MODEL: import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini',
 };
 
 // Helper to check if we're in a development environment

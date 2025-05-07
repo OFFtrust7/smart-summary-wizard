@@ -10,7 +10,7 @@ export class OpenAIModel implements AIModelAdapter {
   private apiKey: string;
   private model: string;
   
-  constructor(apiKey: string, model: string = 'gpt-3.5-turbo') {
+  constructor(apiKey: string, model: string = 'gpt-4o-mini') {
     this.apiKey = apiKey;
     this.model = model;
   }

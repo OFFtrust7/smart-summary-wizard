@@ -19,9 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Set your OpenAI API key here or use environment variable
-# openai.api_key = "your-api-key-here"  # Replace with your API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Set the OpenAI API key provided by the user
+openai.api_key = "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"
+# Alternatively, you can use an environment variable:
+# openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Models
 class ChatRequest(BaseModel):
@@ -35,7 +36,7 @@ class YouTubeURL(BaseModel):
 async def chat(data: ChatRequest):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": data.prompt}
@@ -68,9 +69,9 @@ async def generate_script(data: YouTubeURL):
         with open(audio_file, "rb") as f:
             transcript = openai.Audio.transcribe("whisper-1", f)
 
-        # Generate a script using GPT-4
+        # Generate a script using GPT-4o-mini
         response = openai.ChatCompletion.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a professional video script writer."},
                 {"role": "user", "content": f"Create a clean, structured script from this video transcript: {transcript['text']}"}

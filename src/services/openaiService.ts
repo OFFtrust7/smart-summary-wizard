@@ -21,12 +21,12 @@ export async function getOpenAIResponse(prompt: string) {
 
   try {
     // Get the model from environment or use default
-    let model = env.OPENAI_MODEL || "gpt-4o";
+    let model = env.OPENAI_MODEL || "gpt-4o-mini";
     
     // Validate the model
     if (!VALID_MODELS.includes(model)) {
-      console.warn(`Warning: Model ${model} might not be valid. Using gpt-4o as fallback.`);
-      model = "gpt-4o";
+      console.warn(`Warning: Model ${model} might not be valid. Using gpt-4o-mini as fallback.`);
+      model = "gpt-4o-mini";
     }
     
     console.log(`Making OpenAI API request with model: ${model}`);
