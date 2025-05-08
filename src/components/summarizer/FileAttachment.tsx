@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Upload, File, X, FileImage, FilePdf, FileText } from 'lucide-react';
+import { Upload, File, X, FileImage, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -112,7 +112,7 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
       return <FileImage className="h-5 w-5" />;
     }
     if (fileType === 'application/pdf') {
-      return <FilePdf className="h-5 w-5" />;
+      return <File className="h-5 w-5" />; // Using regular File icon instead of FilePdf
     }
     if (fileType.startsWith('text/') || fileName.endsWith('.txt')) {
       return <FileText className="h-5 w-5" />;
