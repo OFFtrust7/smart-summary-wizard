@@ -38,9 +38,9 @@ const UrlSummaryTab: React.FC<UrlSummaryTabProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>URL & PDF Summarization</CardTitle>
+        <CardTitle>URL & Document Summarization</CardTitle>
         <CardDescription>
-          Upload a PDF or enter a URL to summarize
+          Upload a document (PDF, TXT) or enter a URL to summarize
           {renderUsageLimits()}
         </CardDescription>
       </CardHeader>
@@ -49,7 +49,7 @@ const UrlSummaryTab: React.FC<UrlSummaryTabProps> = ({
           onSummarize={onSummarize} 
           setIsLoading={setIsLoading} 
           inputType="url"
-          placeholder="Enter URL (e.g., https://example.com/article)"
+          placeholder="Enter URL or upload document"
           disabled={!isPremium && isLimitReached(type)}
         />
         <SummaryResult summary={summary} isLoading={isLoading} />

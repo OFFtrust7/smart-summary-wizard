@@ -28,6 +28,7 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
   const {
     text,
     setText,
+    handleFileContent,
     summaryLength,
     setSummaryLength,
     handleSubmit,
@@ -63,8 +64,8 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
       >
         <div className="flex items-center justify-between mb-2">
           <label htmlFor="text-input" className="block text-sm font-medium text-foreground">
-            {inputType === 'text' ? 'Enter text' : 
-            inputType === 'url' ? 'Enter URL' : 'Enter YouTube URL'}
+            {inputType === 'text' ? 'Enter text or attach file' : 
+            inputType === 'url' ? 'Enter URL or attach file' : 'Enter YouTube URL'}
           </label>
           
           {/* Free plan usage indicator */}
@@ -87,6 +88,7 @@ const SummarizerForm: React.FC<SummarizerFormProps> = ({
         <div className="mt-4">
           <FileAttachment
             onFileSelect={handleFileSelect}
+            onFileContent={handleFileContent}
             disabled={isFormDisabled}
           />
         </div>
