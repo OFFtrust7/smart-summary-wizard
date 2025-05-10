@@ -68,9 +68,18 @@ export function useSummarizerForm({
       contentToSummarize = fileContent;
     }
     
+    // Allow submission with attached files, even if no text is provided
     if (!contentToSummarize && attachedFiles.length === 0) {
       toast.error(`Please enter ${inputType === 'text' ? 'some text' : 'a valid URL'} or attach a file to summarize`);
       return;
+    }
+    
+    // If we have attachedFiles but no content yet, we should process them
+    if (!contentToSummarize && attachedFiles.length > 0) {
+      // For file-only submissions without text content
+      toast.info("Processing attached file...");
+      // Set a placeholder for file processing
+      contentToSummarize = `[Processing file: ${attachedFiles[0].name}]`;
     }
 
     // Check usage limits before proceeding
