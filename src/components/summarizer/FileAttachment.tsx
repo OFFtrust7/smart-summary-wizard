@@ -61,6 +61,7 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
           } 
           else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
             try {
+              toast.info(`Reading file: ${file.name}`);
               // For text files, use readAsText with UTF-8 encoding specified
               const text = await readFileAsText(file);
               // Clean up any non-printable characters
@@ -75,10 +76,12 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
           else if (file.type.startsWith('image/')) {
             toast.info(`Attached image: ${file.name}`);
             // Image processing would be handled by the backend
+            onFileContent(`[Image: ${file.name}]`, file.name);
             toast.info("Image content will need OCR processing by the service");
           }
           else {
             toast.info(`Attached file: ${file.name}`);
+            onFileContent(`[File: ${file.name}]`, file.name);
           }
         } catch (error) {
           console.error('File processing error:', error);
@@ -97,7 +100,9 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
       // Remove any repeated line breaks
       .replace(/(\r?\n){3,}/g, '\n\n')
       // Ensure consistent line breaks
-      .replace(/\r\n/g, '\n');
+      .replace(/\r\n/g, '\n')
+      // Replace any remaining non-ASCII characters
+      .replace(/[^\x00-\x7F]/g, '');
   };
   
   const readFileAsText = (file: File): Promise<string> => {

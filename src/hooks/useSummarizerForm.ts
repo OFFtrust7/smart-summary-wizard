@@ -49,11 +49,30 @@ export function useSummarizerForm({
         toast.info(`PDF "${name}" attached. Content will be processed automatically.`);
       } else {
         // For text files, fill the textarea with the content
-        setText(content);
+        // Make sure the content is properly encoded as English text
+        const cleanedContent = ensureEnglishText(content);
+        setText(cleanedContent);
         toast.success(`Content from "${name}" loaded for summarization`);
       }
     } else {
       toast.info(`File "${name}" attached for processing`);
+    }
+  };
+  
+  // Helper function to ensure text is properly encoded for English display
+  const ensureEnglishText = (text: string): string => {
+    try {
+      // Remove any non-printable characters except line breaks and spaces
+      const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, '')
+        // Remove any repeated line breaks
+        .replace(/(\r?\n){3,}/g, '\n\n')
+        // Ensure consistent line breaks
+        .replace(/\r\n/g, '\n');
+      
+      return cleanText;
+    } catch (error) {
+      console.error('Error cleaning text:', error);
+      return text; // Return original if cleaning fails
     }
   };
 
@@ -78,8 +97,13 @@ export function useSummarizerForm({
     if (!contentToSummarize && attachedFiles.length > 0) {
       // For file-only submissions without text content
       toast.info("Processing attached file...");
-      // Set a placeholder for file processing
-      contentToSummarize = `[Processing file: ${attachedFiles[0].name}]`;
+      
+      // Set a placeholder for file processing and show file name
+      const fileName = attachedFiles[0].name;
+      contentToSummarize = `[Processing file: ${fileName}]`;
+      
+      // Update the text area to show processing message
+      setText(`Processing ${fileName}...`);
     }
 
     // Check usage limits before proceeding
@@ -89,6 +113,7 @@ export function useSummarizerForm({
     }
     
     setIsLoading(true);
+    toast.info("Generating summary...");
     
     try {
       // If this is URL or YouTube, we pass directly to the parent handler
