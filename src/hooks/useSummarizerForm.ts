@@ -38,13 +38,20 @@ export function useSummarizerForm({
   };
 
   const handleFileContent = (content: string, name: string) => {
+    // Store file content as is, without modifications
     setFileContent(content);
     setFileName(name);
     
     // For text input type, automatically set the content to the text field
     if (inputType === 'text') {
-      setText(content);
-      toast.success(`Content from "${name}" loaded for summarization`);
+      if (content.startsWith('[PDF Document:')) {
+        // For PDFs, don't auto-fill the text area
+        toast.info(`PDF "${name}" attached. Content will be processed automatically.`);
+      } else {
+        // For text files, fill the textarea with the content
+        setText(content);
+        toast.success(`Content from "${name}" loaded for summarization`);
+      }
     } else {
       toast.info(`File "${name}" attached for processing`);
     }
@@ -53,8 +60,13 @@ export function useSummarizerForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Use fileContent if available and no text is entered
-    const contentToSummarize = text.trim() || fileContent;
+    // Decide what content to summarize (text input or file content)
+    let contentToSummarize = text.trim();
+    
+    // If no text is entered, but file content is available, use that
+    if (!contentToSummarize && fileContent) {
+      contentToSummarize = fileContent;
+    }
     
     if (!contentToSummarize && attachedFiles.length === 0) {
       toast.error(`Please enter ${inputType === 'text' ? 'some text' : 'a valid URL'} or attach a file to summarize`);
@@ -70,26 +82,6 @@ export function useSummarizerForm({
     setIsLoading(true);
     
     try {
-      // Handle attachments if present
-      if (attachedFiles.length > 0 && !text.trim() && !fileContent) {
-        // For now, we'll just process the first file
-        const file = attachedFiles[0];
-        
-        if (file.type.startsWith('image/')) {
-          toast.info('Processing attached image...');
-          // Image processing logic would go here
-          toast.error('Image processing not yet implemented');
-          setIsLoading(false);
-          return;
-        } else if (file.type === 'application/pdf') {
-          toast.info('Processing PDF document...');
-          // PDF processing logic would go here
-          toast.error('PDF processing not yet implemented');
-          setIsLoading(false);
-          return;
-        }
-      }
-      
       // If this is URL or YouTube, we pass directly to the parent handler
       if ((inputType === 'url' || inputType === 'youtube') && text.trim()) {
         onSummarize(text);
@@ -97,14 +89,22 @@ export function useSummarizerForm({
       }
       
       // For text summarization, use the service
-      const textToSummarize = contentToSummarize || '';
-      const summary = await summarizeText(textToSummarize, summaryLength);
+      if (!contentToSummarize) {
+        toast.error("No content available to summarize");
+        setIsLoading(false);
+        return;
+      }
+      
+      const summary = await summarizeText(contentToSummarize, summaryLength);
       onSummarize(summary);
       
-      // Save to history
-      const historyTitle = fileName ? 
-        `File: ${fileName.slice(0, 30)}${fileName.length > 30 ? '...' : ''}` : 
-        `${inputType === 'text' ? 'Text' : 'URL'}: ${textToSummarize.slice(0, 50)}${textToSummarize.length > 50 ? '...' : ''}`;
+      // Save to history with appropriate title
+      let historyTitle = '';
+      if (fileName) {
+        historyTitle = `File: ${fileName.slice(0, 30)}${fileName.length > 30 ? '...' : ''}`;
+      } else {
+        historyTitle = `${inputType === 'text' ? 'Text' : 'URL'}: ${contentToSummarize.slice(0, 50)}${contentToSummarize.length > 50 ? '...' : ''}`;
+      }
         
       const newEntry = {
         id: Date.now(),

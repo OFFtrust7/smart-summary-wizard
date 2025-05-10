@@ -51,19 +51,30 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
           
           if (file.type === 'application/pdf') {
             toast.info(`Processing PDF: ${file.name}`);
-            // For PDFs, we'll use text extraction in the backend
-            // but we'll still read the file to send to the service
-            const fileContent = await readFileAsText(file);
-            onFileContent(fileContent, file.name);
+            // For PDFs, we can only extract limited content with readAsArrayBuffer
+            // A proper PDF parser would be needed for production use
+            const arrayBuffer = await readFileAsArrayBuffer(file);
+            // Just notify user about PDF attachment, actual parsing needs backend
+            toast.info("PDF attached. Full PDF parsing requires backend processing.");
+            // Pass a placeholder for PDF content
+            onFileContent(`[PDF Document: ${file.name}]`, file.name);
           } 
           else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-            const text = await readFileAsText(file);
-            onFileContent(text, file.name);
+            try {
+              // For text files, use readAsText with UTF-8 encoding specified
+              const text = await readFileAsText(file);
+              // Clean up any non-printable characters
+              const cleanedText = cleanTextContent(text);
+              onFileContent(cleanedText, file.name);
+              toast.success(`Text content from "${file.name}" loaded`);
+            } catch (error) {
+              console.error("Error reading text file:", error);
+              toast.error("Could not read text content. File may be corrupted or in an unsupported format.");
+            }
           }
           else if (file.type.startsWith('image/')) {
             toast.info(`Attached image: ${file.name}`);
             // Image processing would be handled by the backend
-            // For now, just notify user that images aren't directly summarized
             toast.info("Image content will need OCR processing by the service");
           }
           else {
@@ -79,6 +90,16 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
     }
   };
   
+  // Helper function to clean text content
+  const cleanTextContent = (text: string): string => {
+    // Remove any non-printable characters except line breaks and spaces
+    return text.replace(/[^\x20-\x7E\n\r\t]/g, '')
+      // Remove any repeated line breaks
+      .replace(/(\r?\n){3,}/g, '\n\n')
+      // Ensure consistent line breaks
+      .replace(/\r\n/g, '\n');
+  };
+  
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -89,8 +110,23 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
           reject(new Error('Failed to read file'));
         }
       };
-      reader.onerror = (e) => reject(new Error('File reading error'));
-      reader.readAsText(file);
+      reader.onerror = () => reject(new Error('File reading error'));
+      reader.readAsText(file, 'UTF-8'); // Explicitly specify UTF-8 encoding
+    });
+  };
+  
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          resolve(e.target.result as ArrayBuffer);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = () => reject(new Error('File reading error'));
+      reader.readAsArrayBuffer(file);
     });
   };
   
