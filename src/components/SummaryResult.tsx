@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -66,11 +67,18 @@ const SummaryResult: React.FC<SummaryResultProps> = ({ summary, isLoading }) => 
   
   // Ensure plain text formatting when needed
   const formatContent = (content: string) => {
+    // If content starts with PDF or file markers, extract readable text
+    if (content.startsWith('[PDF Document:') || content.startsWith('[File:')) {
+      // Display a more user-friendly message about the processed file
+      const fileName = content.match(/\[(PDF Document|File|Image):\s*([^\]]+)\]/)?.[2] || 'file';
+      return `Processed content from "${fileName}"`;
+    }
+    
     if (containsMarkdown(content)) {
       // If the content appears to be markdown, preserve it
       return content;
     } else {
-      // Otherwise, add line breaks for better readability
+      // Plain text rendering with line breaks
       return content.split('\n').map((line, i) => (
         <React.Fragment key={i}>
           {line}

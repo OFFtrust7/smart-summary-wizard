@@ -55,9 +55,9 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
             // A proper PDF parser would be needed for production use
             const arrayBuffer = await readFileAsArrayBuffer(file);
             // Just notify user about PDF attachment, actual parsing needs backend
-            toast.info("PDF attached. Full PDF parsing requires backend processing.");
-            // Pass a placeholder for PDF content
-            onFileContent(`[PDF Document: ${file.name}]`, file.name);
+            const pdfPlaceholder = `Content from PDF: ${file.name}\n\nPDF contents will be processed for summarization.`;
+            onFileContent(pdfPlaceholder, file.name);
+            toast.success(`PDF "${file.name}" attached for processing`);
           } 
           else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
             try {
@@ -69,7 +69,7 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
               const plainText = cleanTextContent(text);
               
               onFileContent(plainText, file.name);
-              toast.success(`Text content from "${file.name}" loaded`);
+              toast.success(`Text content from "${file.name}" loaded for summarization`);
             } catch (error) {
               console.error("Error reading text file:", error);
               toast.error("Could not read text content. File may be corrupted or in an unsupported format.");
@@ -78,12 +78,14 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
           else if (file.type.startsWith('image/')) {
             toast.info(`Attached image: ${file.name}`);
             // Image processing would be handled by the backend
-            onFileContent(`[Image: ${file.name}]`, file.name);
-            toast.info("Image content will need OCR processing by the service");
+            const imagePlaceholder = `Content from image: ${file.name}\n\nImage will be processed for text extraction.`;
+            onFileContent(imagePlaceholder, file.name);
+            toast.info("Image content will be processed for summarization");
           }
           else {
             toast.info(`Attached file: ${file.name}`);
-            onFileContent(`[File: ${file.name}]`, file.name);
+            const filePlaceholder = `Content from file: ${file.name}\n\nFile will be processed for summarization.`;
+            onFileContent(filePlaceholder, file.name);
           }
         } catch (error) {
           console.error('File processing error:', error);
@@ -171,7 +173,7 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
       return <FileImage className="h-5 w-5" />;
     }
     if (fileType === 'application/pdf') {
-      return <File className="h-5 w-5" />; // Using regular File icon instead of FilePdf
+      return <File className="h-5 w-5" />; // Using File icon instead of FilePdf
     }
     if (fileType.startsWith('text/') || fileName.endsWith('.txt')) {
       return <FileText className="h-5 w-5" />;

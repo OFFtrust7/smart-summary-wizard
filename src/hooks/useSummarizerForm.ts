@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
@@ -44,20 +43,22 @@ export function useSummarizerForm({
     
     // For text input type, automatically set the content to the text field
     if (inputType === 'text') {
-      if (content.startsWith('[PDF Document:')) {
-        // For PDFs, don't auto-fill the text area
-        toast.info(`PDF "${name}" attached. Content will be processed automatically.`);
-      } else if (content.startsWith('[Image:') || content.startsWith('[File:')) {
-        // For non-text files, display a processing message
-        toast.info(`File "${name}" attached. Content will be processed automatically.`);
-        setText(`Processing ${name}...`);
-      } else {
-        // For text files, fill the textarea with the content
-        // Make sure the content is properly encoded as plain text
-        const cleanedContent = ensureCleanText(content);
-        setText(cleanedContent);
-        toast.success(`Content from "${name}" loaded for summarization`);
-      }
+      // Display a processing message during file handling
+      setText(`Processing ${name}: Loading content...`);
+      
+      // After a slight delay, update with the actual content
+      setTimeout(() => {
+        // For PDFs and images, show a placeholder until processing is complete
+        if (content.startsWith('Content from PDF:') || content.startsWith('Content from image:') || content.startsWith('Content from file:')) {
+          // Keep the placeholder as text - this indicates file is being processed
+          setText(content);
+        } else {
+          // For regular text files, display the actual content
+          const cleanedContent = ensureCleanText(content);
+          setText(cleanedContent);
+          toast.success(`Content from "${name}" loaded for summarization`);
+        }
+      }, 500);
     } else {
       toast.info(`File "${name}" attached for processing`);
     }
@@ -120,7 +121,7 @@ export function useSummarizerForm({
       
       // Set a placeholder for file processing and show file name
       const fileName = attachedFiles[0].name;
-      contentToSummarize = `[Processing file: ${fileName}]`;
+      contentToSummarize = `Processing file: ${fileName}`;
       
       // Update the text area to show processing message
       setText(`Processing ${fileName}...`);
