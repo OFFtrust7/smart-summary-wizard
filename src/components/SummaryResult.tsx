@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface SummaryResultProps {
   summary: string;
@@ -48,6 +49,16 @@ const SummaryResult: React.FC<SummaryResultProps> = ({ summary, isLoading }) => 
 
   if (!summary) return null;
 
+  // Function to format plain text with line breaks
+  const formatPlainText = (text: string) => {
+    return text.split('\n').map((line, i) => (
+      <React.Fragment key={i}>
+        {line}
+        <br />
+      </React.Fragment>
+    ));
+  };
+
   // Function to help detect if the content appears to be markdown
   const containsMarkdown = (text: string): boolean => {
     // Check for common markdown patterns
@@ -65,26 +76,20 @@ const SummaryResult: React.FC<SummaryResultProps> = ({ summary, isLoading }) => 
     return markdownPatterns.some(pattern => pattern.test(text));
   };
   
-  // Ensure plain text formatting when needed
-  const formatContent = (content: string) => {
+  // Format content based on its type
+  const renderContent = (content: string) => {
     // If content starts with PDF or file markers, extract readable text
     if (content.startsWith('[PDF Document:') || content.startsWith('[File:')) {
-      // Display a more user-friendly message about the processed file
-      const fileName = content.match(/\[(PDF Document|File|Image):\s*([^\]]+)\]/)?.[2] || 'file';
-      return `Processed content from "${fileName}"`;
+      const cleanContent = content.replace(/^\[(PDF Document|File|Image):[^\]]+\]\s*/i, '');
+      return formatPlainText(cleanContent);
     }
     
     if (containsMarkdown(content)) {
-      // If the content appears to be markdown, preserve it
-      return content;
+      // For markdown content, preserve formatting with pre-wrap 
+      return <div className="whitespace-pre-wrap">{content}</div>;
     } else {
       // Plain text rendering with line breaks
-      return content.split('\n').map((line, i) => (
-        <React.Fragment key={i}>
-          {line}
-          <br />
-        </React.Fragment>
-      ));
+      return formatPlainText(content);
     }
   };
 
@@ -111,18 +116,24 @@ const SummaryResult: React.FC<SummaryResultProps> = ({ summary, isLoading }) => 
           </Button>
         </div>
         
-        <ScrollArea className="h-[400px] pr-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="prose prose-sm max-w-none"
-          >
-            <div className="text-balance leading-relaxed whitespace-pre-wrap">
-              {formatContent(summary)}
-            </div>
-          </motion.div>
-        </ScrollArea>
+        <Card className="border rounded-lg p-0">
+          <CardContent className="p-0">
+            <ScrollArea className="h-[400px] w-full overflow-auto">
+              <div className="p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                  className="prose prose-sm max-w-none"
+                >
+                  <div className="text-balance leading-relaxed">
+                    {renderContent(summary)}
+                  </div>
+                </motion.div>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </motion.div>
     </AnimatePresence>
   );
