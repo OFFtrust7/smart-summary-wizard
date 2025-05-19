@@ -64,9 +64,11 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
               toast.info(`Reading file: ${file.name}`);
               // For text files, use readAsText with UTF-8 encoding specified
               const text = await readFileAsText(file);
-              // Clean up any non-printable characters
-              const cleanedText = cleanTextContent(text);
-              onFileContent(cleanedText, file.name);
+              
+              // Ensure we're dealing with plain text, not HTML
+              const plainText = cleanTextContent(text);
+              
+              onFileContent(plainText, file.name);
               toast.success(`Text content from "${file.name}" loaded`);
             } catch (error) {
               console.error("Error reading text file:", error);
@@ -93,16 +95,32 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
     }
   };
   
-  // Helper function to clean text content
+  // Helper function to clean text content and ensure it's plain text
   const cleanTextContent = (text: string): string => {
+    // Remove any HTML tags that might be present
+    let cleanText = text.replace(/<[^>]*>/g, '');
+    
     // Remove any non-printable characters except line breaks and spaces
-    return text.replace(/[^\x20-\x7E\n\r\t]/g, '')
-      // Remove any repeated line breaks
-      .replace(/(\r?\n){3,}/g, '\n\n')
-      // Ensure consistent line breaks
-      .replace(/\r\n/g, '\n')
-      // Replace any remaining non-ASCII characters
-      .replace(/[^\x00-\x7F]/g, '');
+    cleanText = cleanText.replace(/[^\x20-\x7E\n\r\t]/g, '');
+    
+    // Remove any repeated line breaks
+    cleanText = cleanText.replace(/(\r?\n){3,}/g, '\n\n');
+    
+    // Ensure consistent line breaks
+    cleanText = cleanText.replace(/\r\n/g, '\n');
+    
+    // Replace any remaining non-ASCII characters
+    cleanText = cleanText.replace(/[^\x00-\x7F]/g, '');
+    
+    // Decode HTML entities if any present
+    cleanText = cleanText.replace(/&amp;/g, '&')
+                         .replace(/&lt;/g, '<')
+                         .replace(/&gt;/g, '>')
+                         .replace(/&quot;/g, '"')
+                         .replace(/&#039;/g, "'")
+                         .replace(/&nbsp;/g, ' ');
+    
+    return cleanText;
   };
   
   const readFileAsText = (file: File): Promise<string> => {

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -48,6 +47,39 @@ const SummaryResult: React.FC<SummaryResultProps> = ({ summary, isLoading }) => 
 
   if (!summary) return null;
 
+  // Function to help detect if the content appears to be markdown
+  const containsMarkdown = (text: string): boolean => {
+    // Check for common markdown patterns
+    const markdownPatterns = [
+      /^#+\s/m,         // Headers
+      /\*\*.*\*\*/,     // Bold
+      /\*.*\*/,         // Italic
+      /^>\s/m,          // Blockquotes
+      /^-\s/m,          // Unordered lists
+      /^[0-9]+\.\s/m,   // Ordered lists
+      /\[.*\]\(.*\)/,   // Links
+      /^```/m,          // Code blocks
+    ];
+    
+    return markdownPatterns.some(pattern => pattern.test(text));
+  };
+  
+  // Ensure plain text formatting when needed
+  const formatContent = (content: string) => {
+    if (containsMarkdown(content)) {
+      // If the content appears to be markdown, preserve it
+      return content;
+    } else {
+      // Otherwise, add line breaks for better readability
+      return content.split('\n').map((line, i) => (
+        <React.Fragment key={i}>
+          {line}
+          <br />
+        </React.Fragment>
+      ));
+    }
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -79,7 +111,7 @@ const SummaryResult: React.FC<SummaryResultProps> = ({ summary, isLoading }) => 
             className="prose prose-sm max-w-none"
           >
             <div className="text-balance leading-relaxed whitespace-pre-wrap">
-              {summary}
+              {formatContent(summary)}
             </div>
           </motion.div>
         </ScrollArea>

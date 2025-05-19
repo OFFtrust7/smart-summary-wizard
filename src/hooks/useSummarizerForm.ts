@@ -47,10 +47,14 @@ export function useSummarizerForm({
       if (content.startsWith('[PDF Document:')) {
         // For PDFs, don't auto-fill the text area
         toast.info(`PDF "${name}" attached. Content will be processed automatically.`);
+      } else if (content.startsWith('[Image:') || content.startsWith('[File:')) {
+        // For non-text files, display a processing message
+        toast.info(`File "${name}" attached. Content will be processed automatically.`);
+        setText(`Processing ${name}...`);
       } else {
         // For text files, fill the textarea with the content
-        // Make sure the content is properly encoded as English text
-        const cleanedContent = ensureEnglishText(content);
+        // Make sure the content is properly encoded as plain text
+        const cleanedContent = ensureCleanText(content);
         setText(cleanedContent);
         toast.success(`Content from "${name}" loaded for summarization`);
       }
@@ -59,15 +63,31 @@ export function useSummarizerForm({
     }
   };
   
-  // Helper function to ensure text is properly encoded for English display
-  const ensureEnglishText = (text: string): string => {
+  // Helper function to ensure text is clean plain text
+  const ensureCleanText = (text: string): string => {
     try {
+      // Remove any HTML tags that might be present
+      let cleanText = text.replace(/<[^>]*>/g, '');
+      
       // Remove any non-printable characters except line breaks and spaces
-      const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, '')
-        // Remove any repeated line breaks
-        .replace(/(\r?\n){3,}/g, '\n\n')
-        // Ensure consistent line breaks
-        .replace(/\r\n/g, '\n');
+      cleanText = cleanText.replace(/[^\x20-\x7E\n\r\t]/g, '');
+      
+      // Remove any repeated line breaks
+      cleanText = cleanText.replace(/(\r?\n){3,}/g, '\n\n');
+      
+      // Ensure consistent line breaks
+      cleanText = cleanText.replace(/\r\n/g, '\n');
+      
+      // Replace any remaining non-ASCII characters
+      cleanText = cleanText.replace(/[^\x00-\x7F]/g, '');
+      
+      // Decode HTML entities
+      cleanText = cleanText.replace(/&amp;/g, '&')
+                           .replace(/&lt;/g, '<')
+                           .replace(/&gt;/g, '>')
+                           .replace(/&quot;/g, '"')
+                           .replace(/&#039;/g, "'")
+                           .replace(/&nbsp;/g, ' ');
       
       return cleanText;
     } catch (error) {
@@ -129,7 +149,10 @@ export function useSummarizerForm({
         return;
       }
       
-      const summary = await summarizeText(contentToSummarize, summaryLength);
+      // Clean any potential HTML from the content before sending for summarization
+      const cleanContent = ensureCleanText(contentToSummarize);
+      
+      const summary = await summarizeText(cleanContent, summaryLength);
       onSummarize(summary);
       
       // Save to history with appropriate title
@@ -137,7 +160,7 @@ export function useSummarizerForm({
       if (fileName) {
         historyTitle = `File: ${fileName.slice(0, 30)}${fileName.length > 30 ? '...' : ''}`;
       } else {
-        historyTitle = `${inputType === 'text' ? 'Text' : 'URL'}: ${contentToSummarize.slice(0, 50)}${contentToSummarize.length > 50 ? '...' : ''}`;
+        historyTitle = `${inputType === 'text' ? 'Text' : 'URL'}: ${cleanContent.slice(0, 50)}${cleanContent.length > 50 ? '...' : ''}`;
       }
         
       const newEntry = {
