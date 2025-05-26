@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
@@ -37,28 +38,14 @@ export function useSummarizerForm({
   };
 
   const handleFileContent = (content: string, name: string) => {
-    // Store file content as is, without modifications
+    // Store file content separately without modifying the text input
     setFileContent(content);
     setFileName(name);
     
-    // For text input type, automatically set the content to the text field
+    // Only show a brief message in the text area for user feedback
     if (inputType === 'text') {
-      // Display a processing message during file handling
-      setText(`Processing ${name}: Loading content...`);
-      
-      // After a slight delay, update with the actual content
-      setTimeout(() => {
-        // For PDFs and images, show a placeholder until processing is complete
-        if (content.startsWith('Content from PDF:') || content.startsWith('Content from image:') || content.startsWith('Content from file:')) {
-          // Keep the placeholder as text - this indicates file is being processed
-          setText(content);
-        } else {
-          // For regular text files, display the actual content
-          const cleanedContent = ensureCleanText(content);
-          setText(cleanedContent);
-          toast.success(`Content from "${name}" loaded for summarization`);
-        }
-      }, 500);
+      setText(`📎 File attached: ${name} (ready to summarize)`);
+      toast.success(`File "${name}" loaded and ready for summarization`);
     } else {
       toast.info(`File "${name}" attached for processing`);
     }
@@ -100,36 +87,31 @@ export function useSummarizerForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Decide what content to summarize (text input or file content)
-    let contentToSummarize = text.trim();
+    // Decide what content to summarize
+    let contentToSummarize = '';
     
-    // If no text is entered, but file content is available, use that
-    if (!contentToSummarize && fileContent) {
+    // If we have file content, prioritize that over text input
+    if (fileContent) {
       contentToSummarize = fileContent;
+    } else if (text.trim() && !text.startsWith('📎 File attached:')) {
+      // Only use text input if it's not the file attachment message
+      contentToSummarize = text.trim();
     }
     
-    // Allow submission with attached files, even if no text is provided
+    // Check if we have content to summarize
     if (!contentToSummarize && attachedFiles.length === 0) {
       toast.error(`Please enter ${inputType === 'text' ? 'some text' : 'a valid URL'} or attach a file to summarize`);
       return;
     }
     
-    // If we have attachedFiles but no content yet, we should process them
+    // If we have attachedFiles but no content yet, wait for processing
     if (!contentToSummarize && attachedFiles.length > 0) {
-      // For file-only submissions without text content
-      toast.info("Processing attached file...");
-      
-      // Set a placeholder for file processing and show file name
-      const fileName = attachedFiles[0].name;
-      contentToSummarize = `Processing file: ${fileName}`;
-      
-      // Update the text area to show processing message
-      setText(`Processing ${fileName}...`);
+      toast.info("Please wait for file processing to complete...");
+      return;
     }
 
     // Check usage limits before proceeding
     if (!incrementUsage(inputType)) {
-      // If incrementUsage returns false, the limit is reached and a toast is already shown
       return;
     }
     
@@ -138,7 +120,7 @@ export function useSummarizerForm({
     
     try {
       // If this is URL or YouTube, we pass directly to the parent handler
-      if ((inputType === 'url' || inputType === 'youtube') && text.trim()) {
+      if ((inputType === 'url' || inputType === 'youtube') && text.trim() && !text.startsWith('📎 File attached:')) {
         onSummarize(text);
         return;
       }
@@ -176,6 +158,12 @@ export function useSummarizerForm({
       localStorage.setItem('summaryHistory', JSON.stringify([newEntry, ...history]));
       
       toast.success('Summary generated successfully!');
+      
+      // Clear the text input after successful summarization
+      setText('');
+      setFileContent(null);
+      setFileName(null);
+      
     } catch (error) {
       console.error('Summarization error:', error);
       toast.error('Failed to generate summary. Please try again.');

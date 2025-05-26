@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Upload, File, X, FileImage, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -50,42 +49,26 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
           const file = validFiles[0]; // Process the first valid file
           
           if (file.type === 'application/pdf') {
-            toast.info(`Processing PDF: ${file.name}`);
-            // For PDFs, we can only extract limited content with readAsArrayBuffer
-            // A proper PDF parser would be needed for production use
-            const arrayBuffer = await readFileAsArrayBuffer(file);
-            // Just notify user about PDF attachment, actual parsing needs backend
-            const pdfPlaceholder = `Content from PDF: ${file.name}\n\nPDF contents will be processed for summarization.`;
-            onFileContent(pdfPlaceholder, file.name);
-            toast.success(`PDF "${file.name}" attached for processing`);
+            toast.info(`Processing PDF: ${file.name}...`);
+            // For PDFs, we provide a placeholder since proper extraction needs backend
+            const pdfContent = `Content from PDF: ${file.name}\n\nThis PDF file has been attached and will be processed for summarization. In a production environment, this would extract the actual text content from the PDF.`;
+            onFileContent(pdfContent, file.name);
           } 
           else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-            try {
-              toast.info(`Reading file: ${file.name}`);
-              // For text files, use readAsText with UTF-8 encoding specified
-              const text = await readFileAsText(file);
-              
-              // Ensure we're dealing with plain text, not HTML
-              const plainText = cleanTextContent(text);
-              
-              onFileContent(plainText, file.name);
-              toast.success(`Text content from "${file.name}" loaded for summarization`);
-            } catch (error) {
-              console.error("Error reading text file:", error);
-              toast.error("Could not read text content. File may be corrupted or in an unsupported format.");
-            }
+            toast.info(`Reading text file: ${file.name}...`);
+            const text = await readFileAsText(file);
+            const cleanText = cleanTextContent(text);
+            onFileContent(cleanText, file.name);
           }
           else if (file.type.startsWith('image/')) {
-            toast.info(`Attached image: ${file.name}`);
-            // Image processing would be handled by the backend
-            const imagePlaceholder = `Content from image: ${file.name}\n\nImage will be processed for text extraction.`;
-            onFileContent(imagePlaceholder, file.name);
-            toast.info("Image content will be processed for summarization");
+            toast.info(`Processing image: ${file.name}...`);
+            const imageContent = `Content from image: ${file.name}\n\nThis image file has been attached and will be processed for text extraction and summarization.`;
+            onFileContent(imageContent, file.name);
           }
           else {
-            toast.info(`Attached file: ${file.name}`);
-            const filePlaceholder = `Content from file: ${file.name}\n\nFile will be processed for summarization.`;
-            onFileContent(filePlaceholder, file.name);
+            toast.info(`Processing file: ${file.name}...`);
+            const fileContent = `Content from file: ${file.name}\n\nThis file has been attached and will be processed for summarization.`;
+            onFileContent(fileContent, file.name);
           }
         } catch (error) {
           console.error('File processing error:', error);
