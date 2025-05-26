@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
@@ -39,19 +40,13 @@ export function useSummarizerForm({
   const handleFileContent = (content: string, name: string) => {
     console.log('File content received:', { name, contentLength: content.length, preview: content.substring(0, 100) });
     
-    // Store file content and update the text input with the actual content
+    // Store file content and name
     setFileContent(content);
     setFileName(name);
     
-    // For text input type, replace the text area content with the file content
-    if (inputType === 'text') {
-      setText(content); // Put the entire file content in the text area
-      toast.success(`File "${name}" content loaded into text area`);
-    } else {
-      // For URL/YouTube types, still store but show attachment message
-      setText(`📎 File attached: ${name} (content ready for processing)`);
-      toast.info(`File "${name}" attached for processing`);
-    }
+    // Always put the full file content directly in the text area for user to see
+    setText(content);
+    toast.success(`File "${name}" content loaded. You can review and edit before summarizing.`);
   };
   
   // Helper function to ensure text is clean plain text
@@ -90,17 +85,8 @@ export function useSummarizerForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Decide what content to summarize - prioritize text content over file content
-    let contentToSummarize = '';
-    
-    // If the text area has actual content (not just the file attachment message), use that
-    if (text.trim() && !text.startsWith('📎 File attached:')) {
-      contentToSummarize = text.trim();
-    } 
-    // Otherwise, use file content if available
-    else if (fileContent) {
-      contentToSummarize = fileContent;
-    }
+    // Use the text content directly (whether it's from file or manually entered)
+    const contentToSummarize = text.trim();
     
     // Check if we have content to summarize
     if (!contentToSummarize && attachedFiles.length === 0) {
@@ -124,8 +110,8 @@ export function useSummarizerForm({
     
     try {
       // If this is URL or YouTube, we pass directly to the parent handler
-      if ((inputType === 'url' || inputType === 'youtube') && text.trim() && !text.startsWith('📎 File attached:')) {
-        onSummarize(text);
+      if ((inputType === 'url' || inputType === 'youtube') && contentToSummarize && !fileName) {
+        onSummarize(contentToSummarize);
         return;
       }
       
