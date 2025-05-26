@@ -50,32 +50,111 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
           
           if (file.type === 'application/pdf') {
             toast.info(`Processing PDF: ${file.name}...`);
-            // For PDFs, we provide a placeholder since proper extraction needs backend
-            const pdfContent = `Content from PDF: ${file.name}\n\nThis PDF file has been attached and will be processed for summarization. In a production environment, this would extract the actual text content from the PDF.`;
-            onFileContent(pdfContent, file.name);
+            // For PDFs, try to extract text content
+            const pdfText = await extractPDFText(file);
+            if (pdfText && pdfText.trim().length > 0) {
+              const cleanText = cleanTextContent(pdfText);
+              onFileContent(cleanText, file.name);
+              toast.success(`PDF content extracted: ${file.name}`);
+            } else {
+              // Fallback: read as text if PDF extraction fails
+              try {
+                const fallbackText = await readFileAsText(file);
+                const cleanText = cleanTextContent(fallbackText);
+                onFileContent(cleanText, file.name);
+                toast.success(`File content loaded: ${file.name}`);
+              } catch (error) {
+                console.error('Failed to read PDF as text:', error);
+                const fallbackContent = `Please copy and paste the content from your PDF file "${file.name}" manually into the text box for summarization.`;
+                onFileContent(fallbackContent, file.name);
+                toast.warning(`Could not extract text from PDF. Please copy-paste content manually.`);
+              }
+            }
           } 
           else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
             toast.info(`Reading text file: ${file.name}...`);
             const text = await readFileAsText(file);
             const cleanText = cleanTextContent(text);
             onFileContent(cleanText, file.name);
+            toast.success(`Text file loaded: ${file.name}`);
           }
           else if (file.type.startsWith('image/')) {
             toast.info(`Processing image: ${file.name}...`);
-            const imageContent = `Content from image: ${file.name}\n\nThis image file has been attached and will be processed for text extraction and summarization.`;
+            // For images, we can't extract text without OCR service
+            const imageContent = `Please describe the content of the image "${file.name}" or use an OCR tool to extract text from it, then paste that text here for summarization.`;
             onFileContent(imageContent, file.name);
+            toast.warning(`Image attached. Please describe content or extract text manually.`);
           }
           else {
             toast.info(`Processing file: ${file.name}...`);
-            const fileContent = `Content from file: ${file.name}\n\nThis file has been attached and will be processed for summarization.`;
-            onFileContent(fileContent, file.name);
+            // Try to read other file types as text
+            try {
+              const fileText = await readFileAsText(file);
+              const cleanText = cleanTextContent(fileText);
+              onFileContent(cleanText, file.name);
+              toast.success(`File content loaded: ${file.name}`);
+            } catch (error) {
+              console.error('Failed to read file as text:', error);
+              const fallbackContent = `Could not read content from "${file.name}". Please copy and paste the content manually into the text box.`;
+              onFileContent(fallbackContent, file.name);
+              toast.warning(`Could not read file content. Please copy-paste manually.`);
+            }
           }
         } catch (error) {
           console.error('File processing error:', error);
           toast.error('Failed to process file content');
+          const errorContent = `Error processing "${file.name}". Please copy and paste the content manually.`;
+          onFileContent(errorContent, file.name);
         } finally {
           setIsProcessing(false);
         }
+      }
+    }
+  };
+  
+  // Enhanced PDF text extraction function
+  const extractPDFText = async (file: File): Promise<string> => {
+    try {
+      // First, try to read as ArrayBuffer and look for text content
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const textDecoder = new TextDecoder('utf-8');
+      
+      // Convert to string and try to extract readable text
+      let text = textDecoder.decode(uint8Array);
+      
+      // Simple PDF text extraction - look for readable content between stream objects
+      const textMatches = text.match(/stream\s*\n([\s\S]*?)\s*endstream/g);
+      if (textMatches) {
+        let extractedText = '';
+        textMatches.forEach(match => {
+          // Remove stream markers and try to extract readable text
+          const content = match.replace(/stream\s*\n|endstream/g, '');
+          // Look for readable ASCII text
+          const readableText = content.match(/[a-zA-Z0-9\s.,!?;:()'"@#$%^&*\-+={}[\]|\\<>\/~`]+/g);
+          if (readableText) {
+            extractedText += readableText.join(' ') + ' ';
+          }
+        });
+        
+        if (extractedText.trim().length > 50) { // Only return if we found substantial text
+          return cleanTextContent(extractedText);
+        }
+      }
+      
+      // Fallback: try to read as plain text
+      const plainText = await readFileAsText(file);
+      return cleanTextContent(plainText);
+      
+    } catch (error) {
+      console.error('PDF extraction failed:', error);
+      // Last resort: try reading as plain text
+      try {
+        const plainText = await readFileAsText(file);
+        return cleanTextContent(plainText);
+      } catch (textError) {
+        console.error('Text fallback failed:', textError);
+        throw new Error('Could not extract text from PDF');
       }
     }
   };
@@ -85,25 +164,26 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
     // Remove any HTML tags that might be present
     let cleanText = text.replace(/<[^>]*>/g, '');
     
-    // Remove any non-printable characters except line breaks and spaces
-    cleanText = cleanText.replace(/[^\x20-\x7E\n\r\t]/g, '');
+    // Remove control characters but keep basic formatting
+    cleanText = cleanText.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
     
-    // Remove any repeated line breaks
+    // Remove repeated whitespace but preserve line breaks
+    cleanText = cleanText.replace(/[ \t]+/g, ' ');
     cleanText = cleanText.replace(/(\r?\n){3,}/g, '\n\n');
     
     // Ensure consistent line breaks
     cleanText = cleanText.replace(/\r\n/g, '\n');
     
-    // Replace any remaining non-ASCII characters
-    cleanText = cleanText.replace(/[^\x00-\x7F]/g, '');
-    
-    // Decode HTML entities if any present
+    // Decode common HTML entities if any present
     cleanText = cleanText.replace(/&amp;/g, '&')
                          .replace(/&lt;/g, '<')
                          .replace(/&gt;/g, '>')
                          .replace(/&quot;/g, '"')
                          .replace(/&#039;/g, "'")
                          .replace(/&nbsp;/g, ' ');
+    
+    // Remove excessive whitespace at start/end
+    cleanText = cleanText.trim();
     
     return cleanText;
   };
@@ -119,7 +199,7 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
         }
       };
       reader.onerror = () => reject(new Error('File reading error'));
-      reader.readAsText(file, 'UTF-8'); // Explicitly specify UTF-8 encoding
+      reader.readAsText(file, 'UTF-8');
     });
   };
   
@@ -156,7 +236,7 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
       return <FileImage className="h-5 w-5" />;
     }
     if (fileType === 'application/pdf') {
-      return <File className="h-5 w-5" />; // Using File icon instead of FilePdf
+      return <File className="h-5 w-5" />;
     }
     if (fileType.startsWith('text/') || fileName.endsWith('.txt')) {
       return <FileText className="h-5 w-5" />;

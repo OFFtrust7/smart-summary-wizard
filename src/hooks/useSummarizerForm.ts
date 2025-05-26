@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
@@ -38,15 +37,19 @@ export function useSummarizerForm({
   };
 
   const handleFileContent = (content: string, name: string) => {
-    // Store file content separately without modifying the text input
+    console.log('File content received:', { name, contentLength: content.length, preview: content.substring(0, 100) });
+    
+    // Store file content and update the text input with the actual content
     setFileContent(content);
     setFileName(name);
     
-    // Only show a brief message in the text area for user feedback
+    // For text input type, replace the text area content with the file content
     if (inputType === 'text') {
-      setText(`📎 File attached: ${name} (ready to summarize)`);
-      toast.success(`File "${name}" loaded and ready for summarization`);
+      setText(content); // Put the entire file content in the text area
+      toast.success(`File "${name}" content loaded into text area`);
     } else {
+      // For URL/YouTube types, still store but show attachment message
+      setText(`📎 File attached: ${name} (content ready for processing)`);
       toast.info(`File "${name}" attached for processing`);
     }
   };
@@ -87,15 +90,16 @@ export function useSummarizerForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Decide what content to summarize
+    // Decide what content to summarize - prioritize text content over file content
     let contentToSummarize = '';
     
-    // If we have file content, prioritize that over text input
-    if (fileContent) {
-      contentToSummarize = fileContent;
-    } else if (text.trim() && !text.startsWith('📎 File attached:')) {
-      // Only use text input if it's not the file attachment message
+    // If the text area has actual content (not just the file attachment message), use that
+    if (text.trim() && !text.startsWith('📎 File attached:')) {
       contentToSummarize = text.trim();
+    } 
+    // Otherwise, use file content if available
+    else if (fileContent) {
+      contentToSummarize = fileContent;
     }
     
     // Check if we have content to summarize
@@ -132,6 +136,8 @@ export function useSummarizerForm({
         return;
       }
       
+      console.log('Content to summarize:', { length: contentToSummarize.length, preview: contentToSummarize.substring(0, 200) });
+      
       // Clean any potential HTML from the content before sending for summarization
       const cleanContent = ensureCleanText(contentToSummarize);
       
@@ -159,7 +165,7 @@ export function useSummarizerForm({
       
       toast.success('Summary generated successfully!');
       
-      // Clear the text input after successful summarization
+      // Clear the state after successful summarization
       setText('');
       setFileContent(null);
       setFileName(null);
