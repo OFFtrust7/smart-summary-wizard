@@ -46,65 +46,70 @@ const FileAttachment: React.FC<FileAttachmentProps> = ({
       if (onFileContent && validFiles.length > 0) {
         try {
           setIsProcessing(true);
-          const file = validFiles[0]; // Process the first valid file
+          const selectedFile = validFiles[0]; // Process the first valid file
           
-          if (file.type === 'application/pdf') {
-            toast.info(`Processing PDF: ${file.name}...`);
+          console.log('Processing file:', selectedFile.name, 'Type:', selectedFile.type);
+          
+          if (selectedFile.type === 'application/pdf') {
+            toast.info(`Processing PDF: ${selectedFile.name}...`);
             // For PDFs, try to extract text content
-            const pdfText = await extractPDFText(file);
+            const pdfText = await extractPDFText(selectedFile);
             if (pdfText && pdfText.trim().length > 0) {
               const cleanText = cleanTextContent(pdfText);
-              onFileContent(cleanText, file.name);
-              toast.success(`PDF content extracted: ${file.name}`);
+              console.log('PDF text extracted:', cleanText.substring(0, 200));
+              onFileContent(cleanText, selectedFile.name);
+              toast.success(`PDF content extracted: ${selectedFile.name}`);
             } else {
               // Fallback: read as text if PDF extraction fails
               try {
-                const fallbackText = await readFileAsText(file);
+                const fallbackText = await readFileAsText(selectedFile);
                 const cleanText = cleanTextContent(fallbackText);
-                onFileContent(cleanText, file.name);
-                toast.success(`File content loaded: ${file.name}`);
+                onFileContent(cleanText, selectedFile.name);
+                toast.success(`File content loaded: ${selectedFile.name}`);
               } catch (error) {
                 console.error('Failed to read PDF as text:', error);
-                const fallbackContent = `Please copy and paste the content from your PDF file "${file.name}" manually into the text box for summarization.`;
-                onFileContent(fallbackContent, file.name);
+                const fallbackContent = `Please copy and paste the content from your PDF file "${selectedFile.name}" manually into the text box for summarization.`;
+                onFileContent(fallbackContent, selectedFile.name);
                 toast.warning(`Could not extract text from PDF. Please copy-paste content manually.`);
               }
             }
           } 
-          else if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-            toast.info(`Reading text file: ${file.name}...`);
-            const text = await readFileAsText(file);
+          else if (selectedFile.type.startsWith('text/') || selectedFile.name.endsWith('.txt')) {
+            toast.info(`Reading text file: ${selectedFile.name}...`);
+            const text = await readFileAsText(selectedFile);
             const cleanText = cleanTextContent(text);
-            onFileContent(cleanText, file.name);
-            toast.success(`Text file loaded: ${file.name}`);
+            console.log('Text file content:', cleanText.substring(0, 200));
+            onFileContent(cleanText, selectedFile.name);
+            toast.success(`Text file loaded: ${selectedFile.name}`);
           }
-          else if (file.type.startsWith('image/')) {
-            toast.info(`Processing image: ${file.name}...`);
+          else if (selectedFile.type.startsWith('image/')) {
+            toast.info(`Processing image: ${selectedFile.name}...`);
             // For images, we can't extract text without OCR service
-            const imageContent = `Please describe the content of the image "${file.name}" or use an OCR tool to extract text from it, then paste that text here for summarization.`;
-            onFileContent(imageContent, file.name);
+            const imageContent = `Please describe the content of the image "${selectedFile.name}" or use an OCR tool to extract text from it, then paste that text here for summarization.`;
+            onFileContent(imageContent, selectedFile.name);
             toast.warning(`Image attached. Please describe content or extract text manually.`);
           }
           else {
-            toast.info(`Processing file: ${file.name}...`);
+            toast.info(`Processing file: ${selectedFile.name}...`);
             // Try to read other file types as text
             try {
-              const fileText = await readFileAsText(file);
+              const fileText = await readFileAsText(selectedFile);
               const cleanText = cleanTextContent(fileText);
-              onFileContent(cleanText, file.name);
-              toast.success(`File content loaded: ${file.name}`);
+              console.log('File content:', cleanText.substring(0, 200));
+              onFileContent(cleanText, selectedFile.name);
+              toast.success(`File content loaded: ${selectedFile.name}`);
             } catch (error) {
               console.error('Failed to read file as text:', error);
-              const fallbackContent = `Could not read content from "${file.name}". Please copy and paste the content manually into the text box.`;
-              onFileContent(fallbackContent, file.name);
+              const fallbackContent = `Could not read content from "${selectedFile.name}". Please copy and paste the content manually into the text box.`;
+              onFileContent(fallbackContent, selectedFile.name);
               toast.warning(`Could not read file content. Please copy-paste manually.`);
             }
           }
         } catch (error) {
           console.error('File processing error:', error);
           toast.error('Failed to process file content');
-          const errorContent = `Error processing "${file.name}". Please copy and paste the content manually.`;
-          onFileContent(errorContent, file.name);
+          const errorContent = `Error processing "${validFiles[0].name}". Please copy and paste the content manually.`;
+          onFileContent(errorContent, validFiles[0].name);
         } finally {
           setIsProcessing(false);
         }
