@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUsageLimits } from '@/contexts/UsageLimitsContext';
 import { summarizeText } from '@/services/summaryService';
+import { preprocessContent, suggestSummaryLength } from '@/utils/contentProcessor';
 
 export type SummaryLength = 'concise' | 'balanced' | 'detailed';
 export type InputType = 'text' | 'url' | 'youtube';
@@ -40,13 +41,26 @@ export function useSummarizerForm({
   const handleFileContent = (content: string, name: string) => {
     console.log('File content received:', { name, contentLength: content.length, preview: content.substring(0, 100) });
     
+    // Preprocess the content for better AI analysis
+    const preprocessedContent = preprocessContent(content);
+    console.log('Content preprocessed:', { 
+      originalLength: content.length, 
+      processedLength: preprocessedContent.length,
+      preview: preprocessedContent.substring(0, 200)
+    });
+    
     // Store file content and name
-    setFileContent(content);
+    setFileContent(preprocessedContent);
     setFileName(name);
     
-    // Always put the full file content directly in the text area for user to see
-    setText(content);
-    toast.success(`File "${name}" content loaded. You can review and edit before summarizing.`);
+    // Put the preprocessed content in the text area for user review
+    setText(preprocessedContent);
+    
+    // Auto-suggest summary length based on content complexity
+    const suggestedLength = suggestSummaryLength(preprocessedContent);
+    setSummaryLength(suggestedLength);
+    
+    toast.success(`File "${name}" content loaded and optimized. Summary length auto-adjusted to ${suggestedLength}.`);
   };
   
   // Helper function to ensure text is clean plain text
@@ -86,7 +100,7 @@ export function useSummarizerForm({
     e.preventDefault();
     
     // Use the text content directly (whether it's from file or manually entered)
-    const contentToSummarize = text.trim();
+    let contentToSummarize = text.trim();
     
     // Check if we have content to summarize
     if (!contentToSummarize && attachedFiles.length === 0) {
@@ -106,7 +120,7 @@ export function useSummarizerForm({
     }
     
     setIsLoading(true);
-    toast.info("Generating summary...");
+    toast.info("Analyzing content structure and generating intelligent summary...");
     
     try {
       // If this is URL or YouTube, we pass directly to the parent handler
@@ -115,7 +129,7 @@ export function useSummarizerForm({
         return;
       }
       
-      // For text summarization, use the service
+      // For text summarization, use enhanced preprocessing
       if (!contentToSummarize) {
         toast.error("No content available to summarize");
         setIsLoading(false);
@@ -124,10 +138,10 @@ export function useSummarizerForm({
       
       console.log('Content to summarize:', { length: contentToSummarize.length, preview: contentToSummarize.substring(0, 200) });
       
-      // Clean any potential HTML from the content before sending for summarization
-      const cleanContent = ensureCleanText(contentToSummarize);
+      // Apply final preprocessing before summarization
+      const finalContent = preprocessContent(contentToSummarize);
       
-      const summary = await summarizeText(cleanContent, summaryLength);
+      const summary = await summarizeText(finalContent, summaryLength);
       onSummarize(summary);
       
       // Save to history with appropriate title
@@ -135,7 +149,7 @@ export function useSummarizerForm({
       if (fileName) {
         historyTitle = `File: ${fileName.slice(0, 30)}${fileName.length > 30 ? '...' : ''}`;
       } else {
-        historyTitle = `${inputType === 'text' ? 'Text' : 'URL'}: ${cleanContent.slice(0, 50)}${cleanContent.length > 50 ? '...' : ''}`;
+        historyTitle = `${inputType === 'text' ? 'Text' : 'URL'}: ${finalContent.slice(0, 50)}${finalContent.length > 50 ? '...' : ''}`;
       }
         
       const newEntry = {
@@ -149,7 +163,7 @@ export function useSummarizerForm({
       const history = JSON.parse(localStorage.getItem('summaryHistory') || '[]');
       localStorage.setItem('summaryHistory', JSON.stringify([newEntry, ...history]));
       
-      toast.success('Summary generated successfully!');
+      toast.success('Intelligent summary generated successfully!');
       
       // Clear the state after successful summarization
       setText('');
