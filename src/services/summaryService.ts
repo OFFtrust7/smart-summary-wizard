@@ -4,6 +4,8 @@
  * For demo purposes, we're mocking the API responses.
  */
 
+import { preprocessContent, extractKeyEntities, chunkLargeContent } from '@/utils/contentProcessor';
+
 // Mock summarization function that returns a promise
 export const summarizeText = async (text: string, type: string): Promise<string> => {
   // For demo purposes, simulate API call with a delay
