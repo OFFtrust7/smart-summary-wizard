@@ -1,6 +1,3 @@
-# SnapSummary — README.md
-
-```md
 # SnapSummary
 
 A modern web application built with **Vite**, **TypeScript**, **React**, **shadcn-ui**, and **Tailwind CSS** 
