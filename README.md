@@ -3,10 +3,7 @@
 ```md
 # SnapSummary
 
-A modern web application built with **Vite**, **TypeScript**, **React**, **shadcn-ui**, and **Tailwind CSS** — created and managed via [Lovable](https://lovable.dev).
-
-> 🔗 **Live Project:** [Open in Lovable](https://lovable.dev/projects/9fd18330-b2f9-4bd7-98f2-26d210090c8a)
-
+A modern web application built with **Vite**, **TypeScript**, **React**, **shadcn-ui**, and **Tailwind CSS** 
 ---
 
 ## 📖 Table of Contents
