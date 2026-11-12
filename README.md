@@ -165,7 +165,3 @@ This project is currently unlicensed. Please add a `LICENSE` file if you intend 
 
 ---
 
-**Made with ❤️ using [Lovable](https://lovable.dev)**
-```
-
-Save this as `README.md` in the root of your repository. Let me know if you'd like it customized further — for example, adding badges, screenshots, environment variable docs, or a specific license. 🚀
